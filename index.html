@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Felvételi Esély Kalkulátor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F2EC;--surface:#FDFAF5;--surface2:#EDE9E0;
+  --border:#D4CFC4;--border2:#C2BCB0;
+  --text:#1A1714;--text2:#5C574F;--text3:#8C877E;
+  --accent:#2D5F3F;--accent-light:#E8F2EC;
+  --accent2:#8B3A1A;--accent2-light:#F5EAE5;
+  --blue:#1A3A5C;--blue-light:#E5EDF5;
+  --amber:#7A5C1A;--amber-light:#F5F0E5;
+  --err:#C0392B;--err-light:#FDECEA;
+  --mono:"DM Mono",monospace;--serif:"Fraunces",serif;--sans:"DM Sans",sans-serif;
+  --r:6px;--r-lg:12px;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+
+/* NAV */
+nav{background:var(--text);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:52px;position:sticky;top:0;z-index:100;gap:12px;}
+.nav-brand{font-family:var(--serif);color:var(--bg);font-size:15px;font-weight:300;text-decoration:none;white-space:nowrap;}
+.nav-links{display:flex;gap:4px;}
+.nav-btn{font-family:var(--sans);font-size:13px;color:rgba(245,242,236,0.7);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);text-decoration:none;padding:6px 12px;border-radius:var(--r);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.nav-btn:hover{background:rgba(255,255,255,0.18);color:var(--bg);}
+.nav-btn.help-btn{background:var(--accent);border-color:var(--accent);color:#fff;}
+.nav-btn.help-btn:hover{background:#1A3D26;}
+
+/* HEADER */
+.page-header{background:var(--text);color:var(--bg);padding:3rem 2rem 2.5rem;position:relative;overflow:hidden;}
+.page-header::before{content:"";position:absolute;top:-60px;right:-60px;width:240px;height:240px;border:1px solid rgba(245,242,236,0.07);border-radius:50%;}
+.header-inner{max-width:860px;margin:0 auto;position:relative;z-index:1;}
+.header-tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:rgba(245,242,236,0.4);text-transform:uppercase;margin-bottom:.75rem;}
+h1{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;line-height:1.2;margin-bottom:.75rem;}
+h1 em{font-style:italic;color:rgba(245,242,236,0.5);}
+.header-sub{font-size:14px;color:rgba(245,242,236,0.45);max-width:540px;line-height:1.7;}
+
+/* MAIN */
+.main{max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+
+/* SECTION */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:1.5rem;overflow:hidden;}
+.section-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface2);}
+.section-num{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--border);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-title{font-family:var(--serif);font-size:16px;font-weight:300;}
+.section-body{padding:1.25rem;}
+
+/* SELECTOR */
+.selector-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1rem;}
+.sel-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+select{width:100%;border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;font-family:var(--sans);font-size:13px;background:var(--bg);color:var(--text);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238C877E' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;transition:border-color .15s;}
+select:focus{border-color:var(--accent);}
+select:disabled{color:var(--text3);cursor:default;}
+.auto-fill-note{font-size:12px;color:var(--accent);font-style:italic;margin-top:.5rem;}
+
+/* TABLE */
+.table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:400px;}
+.data-table th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:8px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.data-table td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--surface2);}
+.data-table input[type="number"]{width:100%;min-width:65px;border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;font-family:var(--mono);font-size:13px;background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;}
+.data-table input[type="number"]:focus{border-color:var(--accent);}
+.data-table input.err{border-color:var(--err)!important;background:var(--err-light);}
+.del-btn{background:none;border:1px solid #E5C4B8;border-radius:var(--r);padding:4px 10px;color:var(--accent2);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.del-btn:hover{background:var(--accent2-light);}
+
+/* BTN ROW */
+.btn-row{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--surface2);}
+.btn-sec{font-family:var(--sans);font-size:13px;border:1px solid var(--border2);border-radius:var(--r);padding:7px 14px;background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;}
+.btn-sec:hover{background:var(--surface2);color:var(--text);}
+.btn-danger{color:var(--accent2)!important;border-color:#E5C4B8!important;}
+.btn-danger:hover{background:var(--accent2-light)!important;}
+
+/* PARAMS */
+.params-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;}
+.param-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.param-field input[type="number"]{width:100%;border:1px solid var(--border2);border-radius:var(--r);padding:9px 10px;font-family:var(--mono);font-size:15px;background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;}
+.param-field input[type="number"]:focus{border-color:var(--accent);}
+.param-field input.err{border-color:var(--err)!important;background:var(--err-light);}
+.param-hint{font-size:12px;color:var(--text3);margin-top:5px;line-height:1.5;}
+.err-msg{font-size:11px;color:var(--err);margin-top:3px;display:none;}
+.err-msg.show{display:block;}
+
+/* LAMBDA */
+.lambda-explain{background:var(--blue-light);border:1px solid #B8CDE0;border-radius:var(--r);padding:1rem;margin-top:1rem;}
+.lambda-explain p{font-size:13px;color:#1A3A5C;line-height:1.65;margin-bottom:.5rem;}
+.lambda-explain p:last-child{margin-bottom:0;}
+.lambda-scale{display:flex;align-items:center;gap:8px;margin:.5rem 0;font-size:12px;color:#1A3A5C;}
+.lambda-scale input[type=range]{flex:1;accent-color:var(--blue);}
+
+/* RUN BTN */
+.run-btn{display:block;width:100%;padding:15px;background:var(--text);color:var(--bg);border:none;border-radius:var(--r-lg);font-family:var(--serif);font-size:18px;font-weight:300;cursor:pointer;transition:all .2s;letter-spacing:.01em;margin-bottom:1.5rem;}
+.run-btn:hover{background:var(--accent);transform:translateY(-1px);}
+.run-btn:disabled{background:var(--border);color:var(--text3);cursor:default;transform:none;}
+
+/* LOADING */
+#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,0.6);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+#loadingOverlay.show{display:flex;}
+.loader-box{background:var(--surface);border-radius:var(--r-lg);padding:2rem 2.5rem;text-align:center;max-width:320px;width:90%;}
+.loader-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-title{font-family:var(--serif);font-size:18px;font-weight:300;margin-bottom:.5rem;}
+.loader-steps{display:flex;flex-direction:column;gap:4px;margin-top:.75rem;}
+.loader-step{font-family:var(--mono);font-size:11px;color:var(--text3);transition:color .3s;}
+.loader-step.active{color:var(--accent);}
+.loader-step.done{color:var(--text2);}
+.loader-progress{height:3px;background:var(--border);border-radius:2px;margin-top:1rem;overflow:hidden;}
+.loader-bar{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .4s ease;}
+
+/* RESULTS */
+#results{display:none;}
+
+/* HIGHLIGHT */
+.highlight-section{background:var(--accent);border-radius:var(--r-lg);margin-bottom:1.5rem;overflow:hidden;}
+.highlight-header{padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.15);}
+.highlight-header h2{font-family:var(--serif);font-size:clamp(18px,3vw,22px);font-weight:300;color:#fff;line-height:1.3;}
+.highlight-header p{font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;}
+.highlight-body{padding:1.25rem 1.5rem;}
+.chance-bars{display:flex;flex-direction:column;gap:10px;}
+.chance-row{display:flex;align-items:center;gap:10px;}
+.chance-pt{font-family:var(--mono);font-size:13px;color:rgba(255,255,255,0.75);min-width:54px;flex-shrink:0;}
+.chance-bar-bg{flex:1;background:rgba(0,0,0,0.2);border-radius:4px;height:30px;overflow:hidden;position:relative;}
+.chance-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 10px;background:rgba(255,255,255,0.22);transition:width .8s ease;}
+.chance-pct-label{font-family:var(--mono);font-size:13px;font-weight:500;color:#fff;white-space:nowrap;}
+.chance-pct-right{font-family:var(--mono);font-size:14px;font-weight:500;color:#fff;min-width:50px;text-align:right;flex-shrink:0;}
+.highlight-note{font-size:12px;color:rgba(255,255,255,0.5);margin-top:1rem;line-height:1.65;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.12);}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:10px;margin-bottom:1.5rem;}
+.metric-card{background:var(--surface2);border-radius:var(--r);padding:1rem;text-align:center;}
+.metric-label{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.metric-value{font-family:var(--serif);font-size:22px;font-weight:300;line-height:1;}
+
+/* INTERVALS */
+.intervals-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1.5rem;}
+.intervals-table th{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.intervals-table td{padding:10px 10px;border-bottom:1px solid var(--border);font-size:13px;}
+.intervals-table tr:last-child td{border-bottom:none;}
+.conf-badge{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);}
+.range-val{font-family:var(--mono);font-size:14px;font-weight:500;}
+
+/* CHARTS */
+.chart-wrap{position:relative;height:210px;margin-bottom:1.5rem;}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:12px;color:var(--text3);}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.reg-fit-wrap{position:relative;height:190px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;}
+.info-card{background:var(--surface2);border-radius:var(--r);padding:1rem;font-size:13px;line-height:1.65;color:var(--text2);}
+.info-card strong{font-weight:500;color:var(--text);display:block;margin-bottom:4px;font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;}
+
+/* WARNING */
+.warning-box{background:var(--amber-light);border:1px solid #D4C4A0;border-radius:var(--r);padding:.875rem 1rem;font-size:13px;color:var(--amber);line-height:1.6;margin-bottom:1.5rem;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:300;overflow-y:auto;padding:2rem 1rem;}
+.modal-overlay.show{display:block;}
+.modal-box{background:var(--surface);border-radius:var(--r-lg);max-width:720px;margin:0 auto;overflow:hidden;}
+.modal-header{background:var(--text);color:var(--bg);padding:1.5rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;}
+.modal-header h2{font-family:var(--serif);font-size:22px;font-weight:300;}
+.modal-close{background:none;border:none;color:rgba(245,242,236,0.6);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;transition:color .15s;}
+.modal-close:hover{color:var(--bg);}
+.modal-body{padding:1.5rem;}
+.modal-section{margin-bottom:1.75rem;}
+.modal-section:last-child{margin-bottom:0;}
+.modal-section h3{font-family:var(--serif);font-size:17px;font-weight:300;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+.modal-section p{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:.6rem;}
+.modal-section p:last-child{margin-bottom:0;}
+.modal-section ol,.modal-section ul{font-size:13px;color:var(--text2);line-height:1.7;padding-left:1.25rem;}
+.modal-section li{margin-bottom:.4rem;}
+.step-box{background:var(--surface2);border-radius:var(--r);padding:.875rem 1rem;margin:.5rem 0;border-left:3px solid var(--accent);}
+.step-box p{font-size:13px;color:var(--text2);line-height:1.65;margin:0;}
+.step-box strong{color:var(--text);font-weight:500;}
+.modal-link{color:var(--blue);text-decoration:none;border-bottom:1px solid rgba(26,58,92,0.3);}
+.modal-link:hover{border-bottom-color:var(--blue);}
+.powerbi-link-box{background:var(--blue-light);border:1px solid #B8CDE0;border-radius:var(--r);padding:1rem;margin:.75rem 0;}
+.powerbi-link-box a{color:var(--blue);font-weight:500;word-break:break-all;}
+.formula-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:.875rem 1rem;font-family:var(--mono);font-size:12px;color:var(--text2);margin:.5rem 0;line-height:1.8;}
+
+/* FOOTER */
+footer{text-align:center;padding:2rem;font-size:12px;color:var(--text3);font-family:var(--mono);border-top:1px solid var(--border);}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .page-header{padding:1.75rem 1.25rem;}
+  .main{padding:1.25rem 1rem 3rem;}
+  .info-grid{grid-template-columns:1fr;}
+  .params-grid{grid-template-columns:1fr 1fr;}
+  nav{padding:0 1rem;}
+  .nav-brand{font-size:13px;}
+  .nav-btn{padding:5px 9px;font-size:12px;}
+  .highlight-body{padding:1rem;}
+  .chance-pt{min-width:46px;font-size:11px;}
+  .chance-pct-right{min-width:42px;font-size:12px;}
+  .intervals-table{font-size:12px;}
+  .intervals-table td,.intervals-table th{padding:8px 6px;}
+}
+@media(max-width:420px){
+  .params-grid{grid-template-columns:1fr;}
+  .nav-brand{display:none;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#">Felvételi Kalkulátor</a>
+  <div class="nav-links">
+    <button class="nav-btn help-btn" onclick="openModal()">? Hogyan használd</button>
+  </div>
+</nav>
+
+<header class="page-header">
+  <div class="header-inner">
+    <div class="header-tag">Monte Carlo · Felvételi elemzés · 500 000 forgatókönyv</div>
+    <h1>Ponthatár &amp; Felvételi<br><em>Esély Kalkulátor</em></h1>
+    <p class="header-sub">Válaszd ki a szakot az automatikus adatkitöltéshez, add meg a historikus adatokat és a saját várható pontszámodat — a szimuláció kiszámolja az esélyeidet.</p>
+  </div>
+</header>
+
+<main class="main">
+
+<!-- SECTION 0: Szak kiválasztó -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">0</div>
+    <div class="section-title">Szak kiválasztása — idei adatok automatikus kitöltése</div>
+  </div>
+  <div class="section-body">
+    <div class="selector-grid">
+      <div class="sel-field">
+        <label>Intézmény</label>
+        <select id="sel_int" onchange="updateKar()">
+          <option value="">— válassz —</option>
+        </select>
+      </div>
+      <div class="sel-field">
+        <label>Kar</label>
+        <select id="sel_kar" onchange="updateKepzes()" disabled>
+          <option value="">— előbb intézményt —</option>
+        </select>
+      </div>
+      <div class="sel-field">
+        <label>Képzés (nappali, állami, alap, magyar)</label>
+        <select id="sel_kepzes" onchange="autofillFromDB()" disabled>
+          <option value="">— előbb kart —</option>
+        </select>
+      </div>
+    </div>
+    <div id="autofillNote" class="auto-fill-note" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- SECTION 1: Historikus adatok -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">Historikus felvételi adatok (korábbi évek)</div>
+  </div>
+  <div class="section-body">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Év</th>
+            <th>Összes jelent.</th>
+            <th>Felvett (állami)</th>
+            <th>Ponthatár</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-sec" onclick="addRow()">+ Sor hozzáadása</button>
+    <button class="btn-sec" onclick="loadExample()">Példa: ELTE BTK Kommunikáció</button>
+    <button class="btn-sec btn-danger" onclick="clearAll()">Összes törlése</button>
+  </div>
+</div>
+
+<!-- SECTION 2: Aktuális év -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">Aktuális év paraméterei (2026)</div>
+  </div>
+  <div class="section-body">
+    <div class="params-grid">
+      <div class="param-field">
+        <label>Összes jelentkező</label>
+        <input type="number" id="curr_osszes" value="" min="1" placeholder="pl. 971" oninput="validateParam(this,1,99999)">
+        <div class="err-msg" id="err_osszes">Kötelező, pozitív szám</div>
+        <div class="param-hint">Felvi.hu-n látható idei összes jelent.</div>
+      </div>
+      <div class="param-field">
+        <label>Becsült férőhelyek</label>
+        <input type="number" id="curr_ferohely" value="" min="1" placeholder="pl. 110" oninput="validateParam(this,1,9999)">
+        <div class="err-msg" id="err_ferohely">Kötelező, pozitív szám</div>
+        <div class="param-hint">Becsült állami helyek száma idén</div>
+      </div>
+      <div class="param-field">
+        <label>Bizonytalanság (± fő)</label>
+        <input type="number" id="curr_sd" value="15" min="1" placeholder="pl. 15" oninput="validateParam(this,1,999)">
+        <div class="param-hint">Mennyire bizonytalan a becslés?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: Saját pontszám -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">Saját várható pontszám</div>
+  </div>
+  <div class="section-body">
+    <div class="params-grid">
+      <div class="param-field">
+        <label>Minimum pontszám</label>
+        <input type="number" id="score_min" value="443" min="200" max="500" oninput="validateScore()">
+        <div class="err-msg" id="err_score">Min nem lehet nagyobb mint Max, és 200–500 közé kell esnie</div>
+        <div class="param-hint">Ha rosszul megy az érettségi</div>
+      </div>
+      <div class="param-field">
+        <label>Maximum pontszám</label>
+        <input type="number" id="score_max" value="449" min="200" max="500" oninput="validateScore()">
+        <div class="param-hint">Ha jól megy az érettségi</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 4: Súlyozás -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">Időbeli súlyozás</div>
+  </div>
+  <div class="section-body">
+    <div class="params-grid" style="margin-bottom:.75rem;">
+      <div class="param-field">
+        <label>Súlyozás erőssége (λ)</label>
+        <input type="number" id="lambda" value="0.25" min="0" max="1" step="0.05" oninput="updateLambdaVisual()">
+        <div class="param-hint">0 = minden év egyforma. 0.25 ajánlott. 1 = csak a legutóbbi számít.</div>
+      </div>
+    </div>
+    <div class="lambda-explain">
+      <p><strong style="font-weight:500;">Mit jelent ez és miért fontos?</strong></p>
+      <p>Az elmúlt évek felvételi adatai nem feltétlenül tükrözik a jelenlegi helyzetet. Egy szak 5-6 évvel ezelőtt lehet kevésbé volt népszerű, más volt a férőhelyek száma, más volt a verseny. Ha ezeket az adatokat ugyanolyan súllyal vesszük figyelembe, mint a tavalyi évet, az torzíthatja az előrejelzést.</p>
+      <p>A <strong style="font-weight:500;">λ (lambda) szám</strong> azt szabályozza, hogy a régebbi évek mennyire számítanak:</p>
+      <p>🔵 <strong style="font-weight:500;">λ = 0</strong> → Minden év egyformán számít. Ha a szak viszonylag stabil és nem volt nagy változás, ez a megfelelő választás.</p>
+      <p>🟢 <strong style="font-weight:500;">λ = 0.25 (alapértelmezett, ajánlott)</strong> → Minden ~4 évvel korábbi adat feleakkora súlyt kap, mint az előző évi. Így a régi, talán már nem releváns évek kevésbé torzítanak, de nem tűnnek el teljesen.</p>
+      <p>🔴 <strong style="font-weight:500;">λ = 1</strong> → Szinte csak a legutóbbi 1-2 év számít. Akkor érdemes, ha a szak dinamikája drasztikusan megváltozott.</p>
+      <div class="lambda-scale">
+        <span style="font-size:11px;">0</span>
+        <input type="range" min="0" max="1" step="0.05" value="0.25" oninput="document.getElementById('lambda').value=this.value;updateLambdaVisual()">
+        <span style="font-size:11px;">1</span>
+      </div>
+      <p style="font-size:12px;color:var(--blue);margin-top:.5rem;">Évenkénti súlyok az aktuális λ értékkel (magasabb = fontosabb):</p>
+      <div id="lambdaVisual" style="margin-top:.5rem;"></div>
+    </div>
+  </div>
+</div>
+
+<button class="run-btn" id="runBtn" onclick="runSimulation()">
+  Szimuláció futtatása — 500 000 forgatókönyv →
+</button>
+
+<!-- RESULTS -->
+<div id="results">
+
+  <div class="highlight-section">
+    <div class="highlight-header">
+      <h2 id="highlightTitle">A te felvételi esélyeid</h2>
+      <p id="highlightSub">Monte Carlo szimuláció alapján</p>
+    </div>
+    <div class="highlight-body">
+      <div class="chance-bars" id="chanceBars"></div>
+      <div class="highlight-note" id="highlightNote"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">→</div>
+      <div class="section-title">Ponthatár előrejelzés — valószínűségi intervallumok</div>
+    </div>
+    <div class="section-body">
+      <div class="metrics-grid" id="metricsGrid"></div>
+      <div class="warning-box">⚠ <strong>Fontos:</strong> Ez statisztikai becslés, nem jóslat. A ponthatárt az intézmény által meghirdetett férőhelyek szabják meg — ha ezek a becsülttől lényegesen eltérnek, az eredmény módosulhat.</div>
+      <div class="chart-legend" id="distLegend"></div>
+      <div class="chart-wrap">
+        <canvas id="distChart"></canvas>
+      </div>
+      <table class="intervals-table">
+        <thead><tr><th>Valószínűségi szint</th><th>Konfidencia</th><th>Ponthatár-sáv</th></tr></thead>
+        <tbody id="intervalsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-num">→</div>
+      <div class="section-title">Modell illeszkedése a historikus adatokra</div>
+    </div>
+    <div class="section-body">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1A3A5C;"></div>valós ponthatár</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2D5F3F;"></div>modell becslés</div>
+      </div>
+      <div class="reg-fit-wrap"><canvas id="fitChart"></canvas></div>
+      <div class="info-grid" id="infoGrid"></div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<footer>Monte Carlo felvételi kalkulátor · 2026 adatbázis beágyazva · Tájékoztató jellegű eszköz</footer>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="loader-box">
+    <div class="loader-spinner"></div>
+    <div class="loader-title">Szimuláció fut…</div>
+    <div class="loader-steps">
+      <div class="loader-step" id="ls1">⬤ Súlyozás és regresszió számítása</div>
+      <div class="loader-step" id="ls2">⬤ Bootstrap bizonytalanság becslése</div>
+      <div class="loader-step" id="ls3">⬤ 500 000 forgatókönyv generálása</div>
+      <div class="loader-step" id="ls4">⬤ Eredmények összeállítása</div>
+    </div>
+    <div class="loader-progress"><div class="loader-bar" id="loaderBar"></div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Hogyan használd a kalkulátort?</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-section">
+        <h3>0. lépés — Szak kiválasztása</h3>
+        <p>Először válaszd ki az intézményt, kart és képzést a legördülő listákból. Az adatbázis tartalmazza az összes <strong>nappali, állami ösztöndíjas, alapképzési, magyar nyelvű</strong> szakot 2026-ra.</p>
+        <p>A kiválasztás után az aktuális évi adatok (összes jelentkező, elsőhelyes) automatikusan kitöltődnek — ezeket nem kell kézzel beírnod.</p>
+        <div class="step-box"><p>⚠ <strong>Csak az állami ösztöndíjas, nappali, alap (BA/BSc), magyar nyelvű képzések</strong> szerepelnek az automatikus listában. Ha a saját szakod nem szerepel, kézzel add meg az adatokat a 2. lépésben.</p></div>
+      </div>
+
+      <div class="modal-section">
+        <h3>1. lépés — Historikus adatok</h3>
+        <p>Ide kell beírni az előző évek felvételi adatait: hány fő jelentkezett összesen, hányat vettek fel állami ösztöndíjasként, és mi volt a ponthatár.</p>
+        <p><strong>Honnan szerzed meg ezeket az adatokat?</strong> A felvételi.hu adatbázisából, amelyet az alábbi PowerBI felületen érhetsz el:</p>
+        <div class="powerbi-link-box">
+          <a href="https://app.powerbi.com/view?r=eyJrIjoiMzU0MTUxYjEtZmIzNS00NzQ2LTg1YzEtODEwZDQwMDQ4Yzg3IiwidCI6Ijg3NTQzNjFiLWE0OWEtNDg5NC1iYzc1LWRlYTQ2YTI1MzZjMiIsImMiOjl9" target="_blank">Felvételi adatbázis (PowerBI)</a>
+        </div>
+        <p>A felületen a <strong>6. oldalt</strong> keresd (lapozó nyilak alul). Ott szűrd le az intézményt, kart és szakot, és nézd meg az évenkénti adatokat. Fontos: mindig az <strong>állami ösztöndíjas, nappali</strong> sort nézd!</p>
+        <div class="step-box"><p><strong>Minél több éves adat van, annál pontosabb a becslés.</strong> Ha a szak régebben nagyon más volt (pl. kevés jelentkező), érdemes a régebbi éveknek kisebb λ súlyt adni.</p></div>
+      </div>
+
+      <div class="modal-section">
+        <h3>2. lépés — Aktuális év paraméterei</h3>
+        <p><strong>Összes jelentkező:</strong> A <a class="modal-link" href="https://www.felvi.hu/pub_bin/dload/felviBI/26A_jelentkezok_kepzesenkent.xlsx" target="_blank">felvi.hu-s Excel fájlból</a> (26A adatok) kinyerhető, vagy a 0. lépés automatikusan kitölti.</p>
+        <p><strong>Becsült férőhelyek:</strong> Ez a legbizonytalanabb szám. Az előző évek felvett számából és az intézményi döntésekből kell becsülni. Ha az Eduline-on megjelent kari szintű bővítés/csökkentés, azt is vedd figyelembe — de ne felejtsd el, hogy a kari keretszám nem egyenlő a szak keretszámával!</p>
+        <p><strong>Bizonytalanság (±):</strong> Ha nem tudod pontosan a férőhelyeket, adj meg nagyobb értéket (pl. 20-25). Ez növeli a becslés szórását, de reálisabban tükrözi a helyzetet.</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>3. lépés — Saját pontszám</h3>
+        <p>Add meg a várható pontszámod minimumát és maximumát. Ehhez a <strong>felvi.hu pontszámítóját</strong> érdemes használni: számold ki, mi a pontszámod ha rosszul megy az érettségi, és mi, ha jól megy.</p>
+        <div class="step-box"><p>💡 <strong>Az érettségi nehézsége nem befolyásolja lényegesen a felvételi esélyedet!</strong> Ha mindenki nehezebb érettségit ír, a ponthatár is lejjebb kerül — a relatív pozíciód megmarad.</p></div>
+      </div>
+
+      <div class="modal-section">
+        <h3>Módszertan — Hogyan működik a szimuláció?</h3>
+        <p><strong>1. Súlyozott regresszió (WLS)</strong><br>A modell az elmúlt évek felvételi aránya (felvett/összes jelentkező) és a ponthatár közötti összefüggést tanulják meg. A λ paraméterrel a régebbi évek kisebb súlyt kapnak.</p>
+        <div class="formula-box">
+          Ponthatár ≈ a × (felvett ÷ összes) + b<br>
+          ahol a és b a historikus adatokból számított együtthatók
+        </div>
+        <p><strong>2. Bootstrap bizonytalanság</strong><br>Mivel kevés adatponton alapul a regresszió, a modell 5000-szer véletlenszerűen újramintavételezi az adatokat, és minden alkalommal kiszámítja az egyenest. Így megkapjuk, hogy mennyire ingadoznak az együtthatók.</p>
+        <p><strong>3. Monte Carlo szimuláció (500 000 forgatókönyv)</strong><br>Minden forgatókönyvben véletlenszerűen választ:</p>
+        <ul>
+          <li>Egy felvett számot (normál eloszlás, a becsült érték ± bizonytalanság alapján)</li>
+          <li>Egy aktivitási arányt (87–98%, a visszalépések/törlések hatása)</li>
+          <li>Egy regressziós egyenest (a bootstrap mintából)</li>
+          <li>Egy véletlen zajt (a historikus illeszkedési hiba alapján)</li>
+        </ul>
+        <p>A 500 000 ponthatár-becslés eloszlásából kapjuk meg a valószínűségi intervallumokat és a felvételi esélyeket.</p>
+        <p><strong>4. Korlátok és fenntartások</strong></p>
+        <ul>
+          <li>A modell csak a historikus trendet látja — váratlan intézményi döntések (nagy keretszám-változás) torzíthatják az eredményt</li>
+          <li>Minél kevesebb év adata áll rendelkezésre, annál nagyobb a bizonytalanság</li>
+          <li>A sorrend-változtatások és törlések hatása becsült (87–98% aktív marad)</li>
+          <li>Az érettségi közös hatása kiesik a számításból, mert mindenkit egyformán érint</li>
+          <li>A kalkulátor tájékoztató jellegű — nem helyettesíti a felvi.hu hivatalos adatait</li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
+        <h3>LocalStorage — adatok mentése</h3>
+        <p>A kalkulátor automatikusan elmenti a beírt adataidat a böngésző tárhelyére. Ha bezárod és újra megnyitod az oldalt, az adatok visszatöltődnek. Az "Összes törlése" gomb az elmentett adatokat is törli.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ADATBÁZIS 2026 ───────────────────────────────────────────────────────
+const DB = [{"int":"AVKF","kar":"AVKF","kepzes":"csecsemő- és kisgyermeknevelő","elso":15,"osszes":89},{"int":"AVKF","kar":"AVKF","kepzes":"csecsemő- és kisgyermeknevelő","elso":9,"osszes":38},{"int":"AVKF","kar":"AVKF","kepzes":"óvodapedagógus","elso":20,"osszes":96},{"int":"AVKF","kar":"AVKF","kepzes":"óvodapedagógus","elso":35,"osszes":150},{"int":"AVKF","kar":"AVKF","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (cigány-roma)]","elso":0,"osszes":2},{"int":"AVKF","kar":"AVKF","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":1,"osszes":5},{"int":"AVKF","kar":"AVKF","kepzes":"tanító","elso":15,"osszes":59},{"int":"AVKF","kar":"AVKF","kepzes":"tanító [nemzetiségi tanító (német)]","elso":3,"osszes":4},{"int":"AVKF","kar":"AVKF","kepzes":"szociálpedagógia","elso":9,"osszes":32},{"int":"BCKF","kar":"BCKF","kepzes":"cirkuszművészet","elso":14,"osszes":29},{"int":"BCKF","kar":"BCKF","kepzes":"táncművész [kortárstánc]","elso":13,"osszes":27},{"int":"BCKF","kar":"BCKF","kepzes":"táncos és próbavezető","elso":8,"osszes":20},{"int":"BGE","kar":"BGE-MK","kepzes":"emberi erőforrások","elso":106,"osszes":652},{"int":"BGE","kar":"BGE-MK","kepzes":"gazdálkodási és menedzsment","elso":513,"osszes":2754},{"int":"BGE","kar":"BGE-MÜKK","kepzes":"kereskedelem és marketing","elso":621,"osszes":2357},{"int":"BGE","kar":"BGE-MÜKK","kepzes":"kommunikáció- és médiatudomány","elso":157,"osszes":914},{"int":"BGE","kar":"BGE-NGK","kepzes":"közösségszervezés","elso":61,"osszes":404},{"int":"BGE","kar":"BGE-NGK","kepzes":"nemzetközi gazdálkodás","elso":296,"osszes":1726},{"int":"BGE","kar":"BGE-NGK","kepzes":"turizmus-vendéglátás","elso":593,"osszes":1490},{"int":"BGE","kar":"BGE-NGK","kepzes":"nemzetközi tanulmányok","elso":119,"osszes":853},{"int":"BGE","kar":"BGE-PSZK","kepzes":"pénzügy és számvitel","elso":313,"osszes":1304},{"int":"BGE","kar":"BGE-PSZK","kepzes":"gazdaságinformatikus","elso":309,"osszes":1237},{"int":"BME","kar":"BME-ÉMK","kepzes":"építőmérnöki","elso":309,"osszes":873},{"int":"BME","kar":"BME-ÉPK","kepzes":"építészmérnöki","elso":364,"osszes":843},{"int":"BME","kar":"BME-GPK","kepzes":"energetikai mérnöki","elso":98,"osszes":381},{"int":"BME","kar":"BME-GPK","kepzes":"gépészmérnöki","elso":403,"osszes":1396},{"int":"BME","kar":"BME-GPK","kepzes":"ipari termék- és formatervező mérnöki","elso":57,"osszes":172},{"int":"BME","kar":"BME-GPK","kepzes":"mechatronikai mérnöki","elso":366,"osszes":793},{"int":"BME","kar":"BME-GTK","kepzes":"gazdálkodási és menedzsment","elso":235,"osszes":1566},{"int":"BME","kar":"BME-GTK","kepzes":"nemzetközi gazdálkodás","elso":172,"osszes":924},{"int":"BME","kar":"BME-GTK","kepzes":"pénzügy és számvitel","elso":103,"osszes":500},{"int":"BME","kar":"BME-GTK","kepzes":"műszaki menedzser","elso":65,"osszes":399},{"int":"BME","kar":"BME-GTK","kepzes":"kommunikáció- és médiatudomány","elso":70,"osszes":352},{"int":"BME","kar":"BME-KJK","kepzes":"járműmérnöki","elso":252,"osszes":851},{"int":"BME","kar":"BME-KJK","kepzes":"közlekedésmérnöki","elso":104,"osszes":335},{"int":"BME","kar":"BME-KJK","kepzes":"logisztikai mérnöki","elso":109,"osszes":346},{"int":"BME","kar":"BME-TTK","kepzes":"fizika","elso":59,"osszes":258},{"int":"BME","kar":"BME-TTK","kepzes":"matematika","elso":56,"osszes":247},{"int":"BME","kar":"BME-VBK","kepzes":"biomérnöki","elso":129,"osszes":501},{"int":"BME","kar":"BME-VBK","kepzes":"környezetmérnöki","elso":41,"osszes":168},{"int":"BME","kar":"BME-VBK","kepzes":"vegyészmérnöki","elso":197,"osszes":435},{"int":"BME","kar":"BME-VIK","kepzes":"gazdaságinformatikus","elso":114,"osszes":660},{"int":"BME","kar":"BME-VIK","kepzes":"mérnökinformatikus","elso":620,"osszes":1751},{"int":"BME","kar":"BME-VIK","kepzes":"üzemmérnök-informatikus","elso":0,"osszes":4},{"int":"BME","kar":"BME-VIK","kepzes":"üzemmérnök-informatikus","elso":54,"osszes":279},{"int":"BME","kar":"BME-VIK","kepzes":"villamosmérnöki","elso":393,"osszes":1080},{"int":"CORVINUS","kar":"CORVINUS","kepzes":"alkalmazott közgazdaságtan","elso":114,"osszes":315},{"int":"CORVINUS","kar":"CORVINUS","kepzes":"gazdálkodási és menedzsment","elso":497,"osszes":1410},{"int":"CORVINUS","kar":"CORVINUS","kepzes":"pénzügy és számvitel","elso":227,"osszes":573},{"int":"CORVINUS","kar":"CORVINUS","kepzes":"gazdaságinformatikus","elso":160,"osszes":395},{"int":"DE","kar":"DE-ÁJK","kepzes":"igazságügyi igazgatási","elso":71,"osszes":341},{"int":"DE","kar":"DE-ÁOK","kepzes":"orvosi diagnosztikai analitikus","elso":91,"osszes":345},{"int":"DE","kar":"DE-BTK","kepzes":"anglisztika","elso":61,"osszes":239},{"int":"DE","kar":"DE-BTK","kepzes":"germanisztika [néderlandisztika]","elso":2,"osszes":11},{"int":"DE","kar":"DE-BTK","kepzes":"germanisztika [német]","elso":4,"osszes":23},{"int":"DE","kar":"DE-BTK","kepzes":"közösségszervezés","elso":45,"osszes":212},{"int":"DE","kar":"DE-BTK","kepzes":"magyar","elso":14,"osszes":56},{"int":"DE","kar":"DE-BTK","kepzes":"néprajz","elso":8,"osszes":23},{"int":"DE","kar":"DE-BTK","kepzes":"pedagógia","elso":17,"osszes":67},{"int":"DE","kar":"DE-BTK","kepzes":"pszichológia","elso":232,"osszes":581},{"int":"DE","kar":"DE-BTK","kepzes":"szabad bölcsészet","elso":8,"osszes":62},{"int":"DE","kar":"DE-BTK","kepzes":"szlavisztika [orosz]","elso":7,"osszes":28},{"int":"DE","kar":"DE-BTK","kepzes":"történelem","elso":29,"osszes":111},{"int":"DE","kar":"DE-BTK","kepzes":"újlatin nyelvek és kultúrák [francia]","elso":7,"osszes":22},{"int":"DE","kar":"DE-BTK","kepzes":"újlatin nyelvek és kultúrák [olasz]","elso":1,"osszes":18},{"int":"DE","kar":"DE-BTK","kepzes":"újlatin nyelvek és kultúrák [spanyol]","elso":1,"osszes":11},{"int":"DE","kar":"DE-BTK","kepzes":"informatikus könyvtáros","elso":9,"osszes":30},{"int":"DE","kar":"DE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":89,"osszes":294},{"int":"DE","kar":"DE-BTK","kepzes":"nemzetközi tanulmányok","elso":62,"osszes":262},{"int":"DE","kar":"DE-BTK","kepzes":"politikatudományok","elso":14,"osszes":100},{"int":"DE","kar":"DE-BTK","kepzes":"szociális munka","elso":8,"osszes":38},{"int":"DE","kar":"DE-BTK","kepzes":"szociológia","elso":30,"osszes":119},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [ápoló]","elso":18,"osszes":104},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [dietetikus]","elso":42,"osszes":307},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":189,"osszes":612},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":36,"osszes":178},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [mentőtiszt]","elso":48,"osszes":143},{"int":"DE","kar":"DE-ETK","kepzes":"ápolás és betegellátás [szülésznő]","elso":21,"osszes":73},{"int":"DE","kar":"DE-ETK","kepzes":"egészségügyi gondozás és prevenció [népegészségügyi ellenőr]","elso":8,"osszes":64},{"int":"DE","kar":"DE-ETK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":12,"osszes":66},{"int":"DE","kar":"DE-ETK","kepzes":"egészségügyi szervező","elso":1,"osszes":17},{"int":"DE","kar":"DE-ETK","kepzes":"szociális munka","elso":2,"osszes":14},{"int":"DE","kar":"DE-FOK","kepzes":"digitális fogászati tervezés","elso":24,"osszes":122},{"int":"DE","kar":"DE-GTK","kepzes":"agrár- és üzleti digitalizáció","elso":29,"osszes":146},{"int":"DE","kar":"DE-GTK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":5,"osszes":18},{"int":"DE","kar":"DE-GTK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":4,"osszes":18},{"int":"DE","kar":"DE-GTK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":35,"osszes":179},{"int":"DE","kar":"DE-GTK","kepzes":"gazdálkodási és menedzsment","elso":272,"osszes":932},{"int":"DE","kar":"DE-GTK","kepzes":"kereskedelem és marketing","elso":229,"osszes":919},{"int":"DE","kar":"DE-GTK","kepzes":"kereskedelem és marketing","elso":27,"osszes":112},{"int":"DE","kar":"DE-GTK","kepzes":"nemzetközi gazdálkodás","elso":167,"osszes":455},{"int":"DE","kar":"DE-GTK","kepzes":"pénzügy és számvitel","elso":160,"osszes":487},{"int":"DE","kar":"DE-GTK","kepzes":"turizmus-vendéglátás","elso":6,"osszes":38},{"int":"DE","kar":"DE-GTK","kepzes":"turizmus-vendéglátás","elso":16,"osszes":98},{"int":"DE","kar":"DE-GTK","kepzes":"turizmus-vendéglátás","elso":88,"osszes":432},{"int":"DE","kar":"DE-GTK","kepzes":"rekreáció és életmód","elso":61,"osszes":251},{"int":"DE","kar":"DE-GTK","kepzes":"sportszervezés","elso":76,"osszes":356},{"int":"DE","kar":"DE-GYGYK","kepzes":"romológia","elso":0,"osszes":3},{"int":"DE","kar":"DE-GYGYK","kepzes":"csecsemő- és kisgyermeknevelő","elso":58,"osszes":215},{"int":"DE","kar":"DE-GYGYK","kepzes":"gyógypedagógia","elso":95,"osszes":375},{"int":"DE","kar":"DE-GYGYK","kepzes":"óvodapedagógus","elso":144,"osszes":340},{"int":"DE","kar":"DE-GYGYK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (cigány-roma)]","elso":4,"osszes":13},{"int":"DE","kar":"DE-GYGYK","kepzes":"szociálpedagógia","elso":27,"osszes":134},{"int":"DE","kar":"DE-IK","kepzes":"gazdaságinformatikus","elso":112,"osszes":494},{"int":"DE","kar":"DE-IK","kepzes":"mérnökinformatikus","elso":179,"osszes":475},{"int":"DE","kar":"DE-IK","kepzes":"programtervező informatikus","elso":10,"osszes":34},{"int":"DE","kar":"DE-IK","kepzes":"programtervező informatikus","elso":198,"osszes":560},{"int":"DE","kar":"DE-MÉK","kepzes":"élelmiszermérnöki","elso":41,"osszes":186},{"int":"DE","kar":"DE-MÉK","kepzes":"kertészmérnöki","elso":21,"osszes":94},{"int":"DE","kar":"DE-MÉK","kepzes":"lótenyésztő, lovassport szervező agrármérnöki","elso":31,"osszes":77},{"int":"DE","kar":"DE-MÉK","kepzes":"mezőgazdasági mérnöki","elso":56,"osszes":193},{"int":"DE","kar":"DE-MÉK","kepzes":"mezőgazdasági vízgazdálkodási és környezettechnológiai mérnöki","elso":17,"osszes":82},{"int":"DE","kar":"DE-MÉK","kepzes":"precíziós mezőgazdasági mérnöki","elso":34,"osszes":102},{"int":"DE","kar":"DE-MÉK","kepzes":"természetvédelmi mérnöki","elso":19,"osszes":93},{"int":"DE","kar":"DE-MÉK","kepzes":"vadgazda mérnöki","elso":19,"osszes":67},{"int":"DE","kar":"DE-MK","kepzes":"építészmérnöki","elso":109,"osszes":290},{"int":"DE","kar":"DE-MK","kepzes":"építőmérnöki","elso":88,"osszes":305},{"int":"DE","kar":"DE-MK","kepzes":"gépészmérnöki","elso":2,"osszes":18},{"int":"DE","kar":"DE-MK","kepzes":"gépészmérnöki","elso":133,"osszes":431},{"int":"DE","kar":"DE-MK","kepzes":"járműmérnöki","elso":115,"osszes":365},{"int":"DE","kar":"DE-MK","kepzes":"környezetmérnöki","elso":14,"osszes":64},{"int":"DE","kar":"DE-MK","kepzes":"mechatronikai mérnöki","elso":68,"osszes":209},{"int":"DE","kar":"DE-MK","kepzes":"műszaki menedzser","elso":61,"osszes":307},{"int":"DE","kar":"DE-MK","kepzes":"műszaki menedzser","elso":6,"osszes":20},{"int":"DE","kar":"DE-TTK","kepzes":"anyagmérnöki","elso":2,"osszes":25},{"int":"DE","kar":"DE-TTK","kepzes":"biomérnöki","elso":23,"osszes":132},{"int":"DE","kar":"DE-TTK","kepzes":"vegyészmérnöki","elso":47,"osszes":204},{"int":"DE","kar":"DE-TTK","kepzes":"villamosmérnöki","elso":89,"osszes":224},{"int":"DE","kar":"DE-TTK","kepzes":"edző","elso":45,"osszes":148},{"int":"DE","kar":"DE-TTK","kepzes":"biológia","elso":32,"osszes":252},{"int":"DE","kar":"DE-TTK","kepzes":"biotechnológia","elso":25,"osszes":136},{"int":"DE","kar":"DE-TTK","kepzes":"fizika","elso":7,"osszes":48},{"int":"DE","kar":"DE-TTK","kepzes":"földrajz","elso":16,"osszes":62},{"int":"DE","kar":"DE-TTK","kepzes":"földrajz","elso":1,"osszes":8},{"int":"DE","kar":"DE-TTK","kepzes":"földtudományi","elso":7,"osszes":45},{"int":"DE","kar":"DE-TTK","kepzes":"kémia","elso":14,"osszes":81},{"int":"DE","kar":"DE-TTK","kepzes":"környezettan","elso":1,"osszes":21},{"int":"DE","kar":"DE-TTK","kepzes":"matematika","elso":11,"osszes":48},{"int":"DE","kar":"DE-ZK","kepzes":"alkotóművészet és muzikológia [zeneismeret]","elso":0,"osszes":1},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus ének]","elso":5,"osszes":18},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus fagott]","elso":0,"osszes":1},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus furulya]","elso":0,"osszes":1},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus fuvola]","elso":5,"osszes":14},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus gitár]","elso":0,"osszes":4},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus gordonka]","elso":0,"osszes":2},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus harsona]","elso":2,"osszes":3},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus hegedű]","elso":3,"osszes":6},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus klarinét]","elso":1,"osszes":2},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus kürt]","elso":1,"osszes":4},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":4,"osszes":4},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus oboa]","elso":0,"osszes":2},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus trombita]","elso":1,"osszes":6},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus tuba]","elso":0,"osszes":1},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":4,"osszes":12},{"int":"DE","kar":"DE-ZK","kepzes":"előadó-művészet [klasszikus zongora]","elso":2,"osszes":14},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei basszusgitár]","elso":6,"osszes":6},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei billentyűs hangszerek]","elso":1,"osszes":6},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei ének]","elso":10,"osszes":21},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei gitár]","elso":3,"osszes":7},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei szaxofon]","elso":1,"osszes":1},{"int":"DE","kar":"DE-ZK","kepzes":"kortárs könnyűzene [könnyűzenei ütőhangszerek]","elso":6,"osszes":11},{"int":"DRHE","kar":"DRHE","kepzes":"tanító","elso":56,"osszes":126},{"int":"DUE","kar":"DUE","kepzes":"gazdálkodási és menedzsment","elso":41,"osszes":127},{"int":"DUE","kar":"DUE","kepzes":"gazdaságinformatikus","elso":18,"osszes":87},{"int":"DUE","kar":"DUE","kepzes":"mérnökinformatikus","elso":43,"osszes":172},{"int":"DUE","kar":"DUE","kepzes":"anyagmérnöki","elso":1,"osszes":27},{"int":"DUE","kar":"DUE","kepzes":"gépészmérnöki","elso":36,"osszes":144},{"int":"DUE","kar":"DUE","kepzes":"műszaki menedzser","elso":10,"osszes":72},{"int":"DUE","kar":"DUE","kepzes":"szakoktató","elso":5,"osszes":17},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"gazdálkodási és menedzsment","elso":18,"osszes":51},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"gazdálkodási és menedzsment","elso":28,"osszes":264},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"kereskedelem és marketing","elso":55,"osszes":310},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"kereskedelem és marketing","elso":15,"osszes":61},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"turizmus-vendéglátás","elso":59,"osszes":270},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"mechatronikai mérnöki","elso":8,"osszes":40},{"int":"EDUTUS","kar":"EDUTUS","kepzes":"műszaki menedzser","elso":7,"osszes":28},{"int":"EJF","kar":"EJF","kepzes":"gazdálkodási és menedzsment","elso":36,"osszes":103},{"int":"EJF","kar":"EJF","kepzes":"csecsemő- és kisgyermeknevelő","elso":18,"osszes":62},{"int":"EJF","kar":"EJF","kepzes":"óvodapedagógus","elso":43,"osszes":107},{"int":"EJF","kar":"EJF","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (cigány-roma)]","elso":0,"osszes":1},{"int":"EJF","kar":"EJF","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (horvát)]","elso":4,"osszes":6},{"int":"EJF","kar":"EJF","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":9,"osszes":19},{"int":"EJF","kar":"EJF","kepzes":"tanító","elso":16,"osszes":62},{"int":"EJF","kar":"EJF","kepzes":"tanító [nemzetiségi tanító (német)]","elso":0,"osszes":4},{"int":"EKKE","kar":"EKKE-BTK","kepzes":"anglisztika","elso":13,"osszes":55},{"int":"EKKE","kar":"EKKE-BTK","kepzes":"germanisztika [német]","elso":2,"osszes":7},{"int":"EKKE","kar":"EKKE-BTK","kepzes":"magyar","elso":3,"osszes":19},{"int":"EKKE","kar":"EKKE-BTK","kepzes":"történelem","elso":9,"osszes":38},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"emberi erőforrások","elso":21,"osszes":113},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"gazdálkodási és menedzsment","elso":47,"osszes":220},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"kereskedelem és marketing","elso":62,"osszes":204},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"pénzügy és számvitel","elso":46,"osszes":135},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"turizmus-vendéglátás","elso":59,"osszes":194},{"int":"EKKE","kar":"EKKE-GTK","kepzes":"szociálpedagógia","elso":10,"osszes":63},{"int":"EKKE","kar":"EKKE-IK","kepzes":"gazdaságinformatikus","elso":23,"osszes":132},{"int":"EKKE","kar":"EKKE-IK","kepzes":"programtervező informatikus","elso":78,"osszes":223},{"int":"EKKE","kar":"EKKE-IK","kepzes":"programtervező informatikus","elso":8,"osszes":26},{"int":"EKKE","kar":"EKKE-IK","kepzes":"műszaki menedzser","elso":11,"osszes":46},{"int":"EKKE","kar":"EKKE-IK","kepzes":"műszaki menedzser","elso":8,"osszes":21},{"int":"EKKE","kar":"EKKE-IK","kepzes":"informatikus könyvtáros","elso":7,"osszes":26},{"int":"EKKE","kar":"EKKE-IK","kepzes":"matematika","elso":2,"osszes":7},{"int":"EKKE","kar":"EKKE-MK","kepzes":"tervezőgrafika","elso":131,"osszes":261},{"int":"EKKE","kar":"EKKE-MK","kepzes":"vizuális művészet","elso":7,"osszes":47},{"int":"EKKE","kar":"EKKE-MK","kepzes":"mozgóképkultúra és médiaismeret","elso":61,"osszes":149},{"int":"EKKE","kar":"EKKE-MK","kepzes":"zenekultúra","elso":3,"osszes":9},{"int":"EKKE","kar":"EKKE-MK","kepzes":"kommunikáció- és médiatudomány","elso":45,"osszes":148},{"int":"EKKE","kar":"EKKE-PK","kepzes":"közösségszervezés","elso":5,"osszes":24},{"int":"EKKE","kar":"EKKE-PK","kepzes":"közösségszervezés","elso":18,"osszes":99},{"int":"EKKE","kar":"EKKE-PK","kepzes":"pedagógia","elso":6,"osszes":26},{"int":"EKKE","kar":"EKKE-PK","kepzes":"pszichológia","elso":76,"osszes":408},{"int":"EKKE","kar":"EKKE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":42,"osszes":133},{"int":"EKKE","kar":"EKKE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":15,"osszes":54},{"int":"EKKE","kar":"EKKE-PK","kepzes":"gyógypedagógia","elso":16,"osszes":89},{"int":"EKKE","kar":"EKKE-PK","kepzes":"gyógypedagógia","elso":51,"osszes":240},{"int":"EKKE","kar":"EKKE-PK","kepzes":"óvodapedagógus","elso":79,"osszes":187},{"int":"EKKE","kar":"EKKE-PK","kepzes":"óvodapedagógus","elso":26,"osszes":86},{"int":"EKKE","kar":"EKKE-PK","kepzes":"tanító","elso":29,"osszes":118},{"int":"EKKE","kar":"EKKE-PK","kepzes":"tanító","elso":7,"osszes":40},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"szőlész-borász mérnöki","elso":7,"osszes":31},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"edző","elso":28,"osszes":99},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"rekreáció és életmód","elso":18,"osszes":97},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"sportszervezés","elso":21,"osszes":118},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"biológia","elso":11,"osszes":57},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"földrajz","elso":5,"osszes":29},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"kémia","elso":0,"osszes":9},{"int":"EKKE","kar":"EKKE-TTK","kepzes":"környezettan","elso":2,"osszes":15},{"int":"ELTE","kar":"ELTE-ÁJK","kepzes":"politikatudományok","elso":154,"osszes":564},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"anglisztika","elso":30,"osszes":88},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"germanisztika [német]","elso":4,"osszes":7},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"keleti nyelvek és kultúrák [kínai]","elso":1,"osszes":2},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"szlavisztika [horvát]","elso":0,"osszes":1},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"történelem","elso":5,"osszes":28},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"képi ábrázolás","elso":14,"osszes":32},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"csecsemő- és kisgyermeknevelő","elso":13,"osszes":59},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"óvodapedagógus","elso":38,"osszes":116},{"int":"ELTE","kar":"ELTE-BDPK","kepzes":"tanító","elso":24,"osszes":81},{"int":"ELTE","kar":"ELTE-BGGYK","kepzes":"gyógypedagógia","elso":503,"osszes":1152},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"anglisztika","elso":212,"osszes":861},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"germanisztika [néderlandisztika]","elso":9,"osszes":41},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"germanisztika [német nemzetiségi]","elso":3,"osszes":15},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"germanisztika [német]","elso":20,"osszes":101},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"germanisztika [skandinavisztika]","elso":34,"osszes":101},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [arab]","elso":15,"osszes":55},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [hebraisztika]","elso":4,"osszes":11},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [indológia]","elso":2,"osszes":10},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [iranisztika]","elso":2,"osszes":5},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [japán]","elso":94,"osszes":264},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [kínai]","elso":52,"osszes":182},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [koreai]","elso":74,"osszes":219},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [mongol]","elso":0,"osszes":11},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [tibeti]","elso":0,"osszes":3},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [török]","elso":14,"osszes":30},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"keleti nyelvek és kultúrák [újgörög]","elso":3,"osszes":12},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"magyar","elso":69,"osszes":261},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"néprajz","elso":28,"osszes":127},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"ókori nyelvek és kultúrák [asszíriológia]","elso":3,"osszes":6},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"ókori nyelvek és kultúrák [egyiptológia]","elso":8,"osszes":40},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"ókori nyelvek és kultúrák [klasszika-filológia]","elso":13,"osszes":59},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"régészet","elso":46,"osszes":169},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szabad bölcsészet","elso":222,"osszes":735},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [bolgár]","elso":1,"osszes":4},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [cseh]","elso":4,"osszes":10},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [horvát nemzetiségi]","elso":0,"osszes":3},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [horvát]","elso":6,"osszes":15},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [lengyel]","elso":8,"osszes":25},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [orosz]","elso":37,"osszes":111},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [szerb nemzetiségi]","elso":1,"osszes":3},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [szerb]","elso":1,"osszes":5},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [szlovák]","elso":1,"osszes":2},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [szlovén]","elso":0,"osszes":2},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [ukrán nemzetiségi]","elso":1,"osszes":3},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"szlavisztika [ukrán]","elso":1,"osszes":8},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"történelem","elso":119,"osszes":393},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [francia]","elso":17,"osszes":93},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [olasz]","elso":22,"osszes":111},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [portugál]","elso":11,"osszes":39},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [román nemzetiségi]","elso":0,"osszes":1},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [román]","elso":2,"osszes":4},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"újlatin nyelvek és kultúrák [spanyol]","elso":20,"osszes":93},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"mozgókép [film- és televíziórendezés]","elso":137,"osszes":396},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"zenekultúra","elso":21,"osszes":51},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"informatikus könyvtáros","elso":54,"osszes":149},{"int":"ELTE","kar":"ELTE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":315,"osszes":971},{"int":"ELTE","kar":"ELTE-GTK","kepzes":"gazdálkodási és menedzsment","elso":768,"osszes":3322},{"int":"ELTE","kar":"ELTE-GTK","kepzes":"kereskedelem és marketing","elso":555,"osszes":2298},{"int":"ELTE","kar":"ELTE-GTK","kepzes":"nemzetközi gazdálkodás","elso":622,"osszes":1949},{"int":"ELTE","kar":"ELTE-GTK","kepzes":"pénzügy és számvitel","elso":396,"osszes":1322},{"int":"ELTE","kar":"ELTE-IK","kepzes":"programtervező informatikus","elso":24,"osszes":119},{"int":"ELTE","kar":"ELTE-IK","kepzes":"programtervező informatikus","elso":754,"osszes":1648},{"int":"ELTE","kar":"ELTE-IK","kepzes":"gépészmérnöki","elso":33,"osszes":75},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"közösségszervezés","elso":103,"osszes":446},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"közösségszervezés","elso":4,"osszes":27},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"pedagógia","elso":27,"osszes":178},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"pszichológia","elso":68,"osszes":318},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"pszichológia","elso":1030,"osszes":2061},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"emberi erőforrások","elso":139,"osszes":489},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"edző","elso":51,"osszes":160},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"edző","elso":16,"osszes":72},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"rekreáció és életmód","elso":70,"osszes":320},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"rekreáció és életmód","elso":6,"osszes":57},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"sportszervezés","elso":97,"osszes":439},{"int":"ELTE","kar":"ELTE-PPK","kepzes":"sportszervezés","elso":16,"osszes":82},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"gazdálkodási és menedzsment","elso":43,"osszes":142},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"kereskedelem és marketing","elso":30,"osszes":164},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"pénzügy és számvitel","elso":26,"osszes":94},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"turizmus-vendéglátás","elso":19,"osszes":122},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"nemzetközi tanulmányok","elso":250,"osszes":1016},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"szociális munka","elso":37,"osszes":134},{"int":"ELTE","kar":"ELTE-TÁTK","kepzes":"szociológia","elso":188,"osszes":734},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"csecsemő- és kisgyermeknevelő","elso":67,"osszes":243},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"óvodapedagógus","elso":204,"osszes":636},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":13,"osszes":32},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (szerb)]","elso":0,"osszes":1},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"tanító","elso":155,"osszes":448},{"int":"ELTE","kar":"ELTE-TÓK","kepzes":"tanító [nemzetiségi tanító (német)]","elso":4,"osszes":15},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"biológia","elso":233,"osszes":769},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"fizika","elso":141,"osszes":292},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"földrajz","elso":64,"osszes":166},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"földtudományi","elso":75,"osszes":162},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"kémia","elso":84,"osszes":269},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"környezettan","elso":29,"osszes":125},{"int":"ELTE","kar":"ELTE-TTK","kepzes":"matematika","elso":133,"osszes":375},{"int":"GDE","kar":"GDE","kepzes":"gazdálkodási és menedzsment","elso":80,"osszes":418},{"int":"GDE","kar":"GDE","kepzes":"gazdaságinformatikus","elso":38,"osszes":284},{"int":"GDE","kar":"GDE","kepzes":"mérnökinformatikus","elso":78,"osszes":392},{"int":"GFE","kar":"GFE-ESZK","kepzes":"ápolás és betegellátás [ápoló]","elso":4,"osszes":13},{"int":"GFE","kar":"GFE-ESZK","kepzes":"egészségügyi szervező","elso":0,"osszes":5},{"int":"GFE","kar":"GFE-ESZK","kepzes":"egészségügyi szervező","elso":2,"osszes":10},{"int":"GFE","kar":"GFE-ESZK","kepzes":"szociális munka","elso":7,"osszes":23},{"int":"GFE","kar":"GFE-GK","kepzes":"gazdálkodási és menedzsment","elso":28,"osszes":86},{"int":"GFE","kar":"GFE-GK","kepzes":"pénzügy és számvitel","elso":23,"osszes":62},{"int":"GFE","kar":"GFE-GK","kepzes":"műszaki menedzser","elso":10,"osszes":35},{"int":"GFE","kar":"GFE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":10,"osszes":53},{"int":"GFE","kar":"GFE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":16,"osszes":53},{"int":"GFE","kar":"GFE-PK","kepzes":"óvodapedagógus","elso":43,"osszes":126},{"int":"GFE","kar":"GFE-PK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":2,"osszes":4},{"int":"GFE","kar":"GFE-PK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (román)]","elso":0,"osszes":1},{"int":"GFE","kar":"GFE-PK","kepzes":"tanító","elso":16,"osszes":68},{"int":"GFE","kar":"GFE-PK","kepzes":"tanító [nemzetiségi tanító (német)]","elso":0,"osszes":1},{"int":"GFE","kar":"GFE-PK","kepzes":"tanító [nemzetiségi tanító (román)]","elso":0,"osszes":1},{"int":"KJE","kar":"KJE-GTK","kepzes":"emberi erőforrások","elso":10,"osszes":53},{"int":"KJE","kar":"KJE-GTK","kepzes":"emberi erőforrások","elso":29,"osszes":191},{"int":"KJE","kar":"KJE-GTK","kepzes":"gazdálkodási és menedzsment","elso":40,"osszes":232},{"int":"KJE","kar":"KJE-GTK","kepzes":"gazdálkodási és menedzsment","elso":13,"osszes":100},{"int":"KJE","kar":"KJE-GTK","kepzes":"turizmus-vendéglátás","elso":41,"osszes":163},{"int":"KJE","kar":"KJE-HTK","kepzes":"anglisztika","elso":10,"osszes":75},{"int":"KJE","kar":"KJE-HTK","kepzes":"anglisztika","elso":7,"osszes":35},{"int":"KJE","kar":"KJE-HTK","kepzes":"pedagógia","elso":8,"osszes":28},{"int":"KJE","kar":"KJE-HTK","kepzes":"nemzetközi tanulmányok","elso":5,"osszes":25},{"int":"KJE","kar":"KJE-HTK","kepzes":"nemzetközi tanulmányok","elso":14,"osszes":186},{"int":"KJE","kar":"KJE-HTK","kepzes":"szociális munka","elso":2,"osszes":12},{"int":"KJE","kar":"KJE-UKK","kepzes":"közösségszervezés","elso":34,"osszes":162},{"int":"KJE","kar":"KJE-UKK","kepzes":"közösségszervezés","elso":6,"osszes":35},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazz-zongora]","elso":2,"osszes":4},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazzbasszusgitár]","elso":3,"osszes":4},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazzdob]","elso":1,"osszes":5},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazzének]","elso":9,"osszes":10},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazzgitár]","elso":1,"osszes":2},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazzszaxofon]","elso":0,"osszes":1},{"int":"KJE","kar":"KJE-UKK","kepzes":"előadó-művészet [jazztrombita]","elso":1,"osszes":1},{"int":"KJE","kar":"KJE-UKK","kepzes":"kommunikáció- és médiatudomány","elso":19,"osszes":90},{"int":"KJE","kar":"KJE-UKK","kepzes":"kommunikáció- és médiatudomány","elso":63,"osszes":301},{"int":"KRE","kar":"KRE-BTK","kepzes":"anglisztika","elso":51,"osszes":333},{"int":"KRE","kar":"KRE-BTK","kepzes":"germanisztika [néderlandisztika]","elso":8,"osszes":25},{"int":"KRE","kar":"KRE-BTK","kepzes":"germanisztika [német]","elso":6,"osszes":33},{"int":"KRE","kar":"KRE-BTK","kepzes":"keleti nyelvek és kultúrák [japán]","elso":72,"osszes":229},{"int":"KRE","kar":"KRE-BTK","kepzes":"keleti nyelvek és kultúrák [kínai]","elso":12,"osszes":86},{"int":"KRE","kar":"KRE-BTK","kepzes":"keleti nyelvek és kultúrák [koreai]","elso":45,"osszes":132},{"int":"KRE","kar":"KRE-BTK","kepzes":"magyar","elso":15,"osszes":76},{"int":"KRE","kar":"KRE-BTK","kepzes":"pszichológia","elso":365,"osszes":1466},{"int":"KRE","kar":"KRE-BTK","kepzes":"szabad bölcsészet","elso":29,"osszes":182},{"int":"KRE","kar":"KRE-BTK","kepzes":"történelem","elso":28,"osszes":170},{"int":"KRE","kar":"KRE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":94,"osszes":449},{"int":"KRE","kar":"KRE-BTK","kepzes":"nemzetközi tanulmányok","elso":53,"osszes":384},{"int":"KRE","kar":"KRE-BTK","kepzes":"szociológia","elso":35,"osszes":272},{"int":"KRE","kar":"KRE-GESZK","kepzes":"emberi erőforrások","elso":52,"osszes":268},{"int":"KRE","kar":"KRE-GESZK","kepzes":"gazdálkodási és menedzsment","elso":68,"osszes":499},{"int":"KRE","kar":"KRE-GESZK","kepzes":"pénzügy és számvitel","elso":36,"osszes":299},{"int":"KRE","kar":"KRE-GESZK","kepzes":"ápolás és betegellátás [ápoló]","elso":27,"osszes":99},{"int":"KRE","kar":"KRE-GESZK","kepzes":"rekreáció és életmód","elso":42,"osszes":164},{"int":"KRE","kar":"KRE-GESZK","kepzes":"szociális munka","elso":12,"osszes":72},{"int":"KRE","kar":"KRE-GESZK","kepzes":"szociálpedagógia","elso":34,"osszes":125},{"int":"KRE","kar":"KRE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":46,"osszes":200},{"int":"KRE","kar":"KRE-PK","kepzes":"csecsemő- és kisgyermeknevelő","elso":17,"osszes":71},{"int":"KRE","kar":"KRE-PK","kepzes":"óvodapedagógus","elso":105,"osszes":461},{"int":"KRE","kar":"KRE-PK","kepzes":"óvodapedagógus","elso":53,"osszes":134},{"int":"KRE","kar":"KRE-PK","kepzes":"tanító","elso":51,"osszes":263},{"int":"KRE","kar":"KRE-PK","kepzes":"tanító","elso":10,"osszes":40},{"int":"LFZE","kar":"LFZE","kepzes":"alkotóművészet és muzikológia [alkalmazott zeneszerzés]","elso":14,"osszes":19},{"int":"LFZE","kar":"LFZE","kepzes":"alkotóművészet és muzikológia [elektronikus zenei médiaművészet]","elso":11,"osszes":21},{"int":"LFZE","kar":"LFZE","kepzes":"alkotóművészet és muzikológia [jazz-zeneszerzés]","elso":2,"osszes":3},{"int":"LFZE","kar":"LFZE","kepzes":"alkotóművészet és muzikológia [muzikológia]","elso":9,"osszes":12},{"int":"LFZE","kar":"LFZE","kepzes":"alkotóművészet és muzikológia [zeneszerzés]","elso":9,"osszes":11},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [egyházzene]","elso":5,"osszes":7},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [jazz-zongora]","elso":8,"osszes":12},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [jazzbőgő]","elso":0,"osszes":1},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [jazzének]","elso":14,"osszes":17},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [jazzszaxofon]","elso":3,"osszes":3},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus cimbalom]","elso":1,"osszes":2},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus csembaló]","elso":3,"osszes":3},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus ének]","elso":29,"osszes":33},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus fagott]","elso":2,"osszes":2},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus fuvola]","elso":10,"osszes":14},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus gitár]","elso":6,"osszes":9},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus gordon]","elso":5,"osszes":5},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus gordonka]","elso":14,"osszes":16},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus hárfa]","elso":2,"osszes":2},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus harmonika]","elso":1,"osszes":1},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus harsona]","elso":6,"osszes":8},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus hegedű]","elso":17,"osszes":21},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus klarinét]","elso":8,"osszes":9},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus kürt]","elso":5,"osszes":7},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":2,"osszes":2},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus oboa]","elso":6,"osszes":7},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus orgona]","elso":3,"osszes":4},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus szaxofon]","elso":4,"osszes":4},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus trombita]","elso":13,"osszes":13},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus tuba]","elso":3,"osszes":3},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":10,"osszes":13},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [klasszikus zongora]","elso":25,"osszes":25},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [kórusvezetés]","elso":1,"osszes":8},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [népi ének]","elso":6,"osszes":12},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [népi fúvós (furulya)]","elso":0,"osszes":1},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [népi pengetős (citera-koboz)]","elso":0,"osszes":1},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [népi vonós (brácsa)]","elso":0,"osszes":2},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [népi vonós (hegedű)]","elso":1,"osszes":4},{"int":"LFZE","kar":"LFZE","kepzes":"előadó-művészet [zenekarvezetés]","elso":8,"osszes":10},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"állattenyésztő mérnöki","elso":36,"osszes":77},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"állattenyésztő mérnöki","elso":22,"osszes":91},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"állattenyésztő mérnöki","elso":39,"osszes":153},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"élelmiszermérnöki","elso":69,"osszes":245},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":37,"osszes":164},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":12,"osszes":51},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"kertészmérnöki","elso":21,"osszes":62},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"kertészmérnöki","elso":26,"osszes":131},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"kertészmérnöki","elso":71,"osszes":256},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"lótenyésztő, lovassport szervező agrármérnöki","elso":46,"osszes":128},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"lótenyésztő, lovassport szervező agrármérnöki","elso":55,"osszes":103},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"mezőgazdasági mérnöki","elso":11,"osszes":27},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"mezőgazdasági mérnöki","elso":40,"osszes":105},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"mezőgazdasági mérnöki","elso":40,"osszes":94},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"mezőgazdasági mérnöki","elso":79,"osszes":246},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"szőlész-borász mérnöki","elso":24,"osszes":83},{"int":"MATE","kar":"MATE-AGRI-FOOD","kepzes":"tájrendező és kertépítő mérnöki","elso":133,"osszes":333},{"int":"MATE","kar":"MATE-ART","kepzes":"fotográfia","elso":2,"osszes":24},{"int":"MATE","kar":"MATE-ART","kepzes":"látványtervezés","elso":7,"osszes":46},{"int":"MATE","kar":"MATE-ART","kepzes":"média design","elso":7,"osszes":31},{"int":"MATE","kar":"MATE-ART","kepzes":"képi ábrázolás","elso":8,"osszes":25},{"int":"MATE","kar":"MATE-ART","kepzes":"kézműves tárgykultúra","elso":7,"osszes":17},{"int":"MATE","kar":"MATE-ART","kepzes":"mozgóképkultúra és médiaismeret","elso":9,"osszes":40},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"emberi erőforrások","elso":29,"osszes":207},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"gazdálkodási és menedzsment","elso":64,"osszes":301},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"kereskedelem és marketing","elso":24,"osszes":84},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"kereskedelem és marketing","elso":52,"osszes":287},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"pénzügy és számvitel","elso":19,"osszes":58},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"pénzügy és számvitel","elso":14,"osszes":49},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"turizmus-vendéglátás","elso":65,"osszes":243},{"int":"MATE","kar":"MATE-ECONOMY","kepzes":"turizmus-vendéglátás","elso":26,"osszes":94},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"mezőgazdasági vízgazdálkodási és környezettechnológiai mérnöki","elso":15,"osszes":74},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"természetvédelmi mérnöki","elso":15,"osszes":57},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"természetvédelmi mérnöki","elso":42,"osszes":162},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"vadgazda mérnöki","elso":32,"osszes":93},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"környezetmérnöki","elso":23,"osszes":126},{"int":"MATE","kar":"MATE-ENVI-NAT","kepzes":"biológia","elso":15,"osszes":78},{"int":"MATE","kar":"MATE-PEDAGOGY","kepzes":"csecsemő- és kisgyermeknevelő","elso":14,"osszes":46},{"int":"MATE","kar":"MATE-PEDAGOGY","kepzes":"gyógypedagógia","elso":52,"osszes":177},{"int":"MATE","kar":"MATE-PEDAGOGY","kepzes":"óvodapedagógus","elso":37,"osszes":121},{"int":"MATE","kar":"MATE-PEDAGOGY","kepzes":"tanító","elso":25,"osszes":84},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"agrár- és üzleti digitalizáció","elso":5,"osszes":14},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"agrár- és üzleti digitalizáció","elso":6,"osszes":20},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"mezőgazdasági és élelmiszeripari gépészmérnöki","elso":15,"osszes":44},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"gazdaságinformatikus","elso":7,"osszes":30},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"biomérnöki","elso":21,"osszes":146},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"gépészmérnöki","elso":84,"osszes":303},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"gépészmérnöki","elso":13,"osszes":48},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"mechatronikai mérnöki","elso":20,"osszes":131},{"int":"MATE","kar":"MATE-TECH-INFO","kepzes":"műszaki menedzser","elso":21,"osszes":115},{"int":"ME","kar":"ME-ÁJK","kepzes":"igazságügyi igazgatási","elso":23,"osszes":104},{"int":"ME","kar":"ME-ÁJK","kepzes":"személyügyi, munkaügyi és szociális igazgatási","elso":10,"osszes":49},{"int":"ME","kar":"ME-AVK","kepzes":"anyagmérnöki","elso":7,"osszes":35},{"int":"ME","kar":"ME-AVK","kepzes":"vegyészmérnöki","elso":21,"osszes":64},{"int":"ME","kar":"ME-BBZK","kepzes":"alkotóművészet és muzikológia [zeneismeret]","elso":2,"osszes":3},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus ének]","elso":0,"osszes":6},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus furulya]","elso":0,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus fuvola]","elso":1,"osszes":4},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus gitár]","elso":0,"osszes":3},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus gordon]","elso":0,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus gordonka]","elso":1,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus harsona]","elso":0,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus hegedű]","elso":0,"osszes":3},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus klarinét]","elso":1,"osszes":2},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus kürt]","elso":2,"osszes":3},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":0,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus szaxofon]","elso":1,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus trombita]","elso":1,"osszes":3},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":0,"osszes":2},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [klasszikus zongora]","elso":2,"osszes":4},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [kórusvezetés]","elso":1,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"előadó-művészet [zenekarvezetés]","elso":0,"osszes":1},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei basszusgitár]","elso":8,"osszes":9},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei billentyűs hangszerek]","elso":11,"osszes":12},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei ének]","elso":37,"osszes":56},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei gitár]","elso":11,"osszes":14},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei szaxofon]","elso":3,"osszes":5},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei trombita]","elso":4,"osszes":5},{"int":"ME","kar":"ME-BBZK","kepzes":"kortárs könnyűzene [könnyűzenei ütőhangszerek]","elso":21,"osszes":24},{"int":"ME","kar":"ME-BTK","kepzes":"anglisztika","elso":26,"osszes":92},{"int":"ME","kar":"ME-BTK","kepzes":"közösségszervezés","elso":16,"osszes":69},{"int":"ME","kar":"ME-BTK","kepzes":"régészet","elso":2,"osszes":23},{"int":"ME","kar":"ME-BTK","kepzes":"történelem","elso":5,"osszes":24},{"int":"ME","kar":"ME-BTK","kepzes":"gyógypedagógia","elso":48,"osszes":153},{"int":"ME","kar":"ME-BTK","kepzes":"tanító","elso":20,"osszes":67},{"int":"ME","kar":"ME-BTK","kepzes":"kommunikáció- és médiatudomány","elso":49,"osszes":153},{"int":"ME","kar":"ME-BTK","kepzes":"kulturális antropológia","elso":5,"osszes":19},{"int":"ME","kar":"ME-BTK","kepzes":"nemzetközi tanulmányok","elso":14,"osszes":84},{"int":"ME","kar":"ME-BTK","kepzes":"politikatudományok","elso":7,"osszes":47},{"int":"ME","kar":"ME-BTK","kepzes":"szociális munka","elso":4,"osszes":25},{"int":"ME","kar":"ME-BTK","kepzes":"szociológia","elso":9,"osszes":50},{"int":"ME","kar":"ME-ETK","kepzes":"ápolás és betegellátás [ápoló]","elso":18,"osszes":64},{"int":"ME","kar":"ME-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":83,"osszes":321},{"int":"ME","kar":"ME-ETK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":16,"osszes":74},{"int":"ME","kar":"ME-ETK","kepzes":"egészségügyi szervező","elso":5,"osszes":22},{"int":"ME","kar":"ME-ETK","kepzes":"orvosi diagnosztikai analitikus","elso":27,"osszes":117},{"int":"ME","kar":"ME-GÉIK","kepzes":"gazdaságinformatikus","elso":26,"osszes":116},{"int":"ME","kar":"ME-GÉIK","kepzes":"mérnökinformatikus","elso":41,"osszes":180},{"int":"ME","kar":"ME-GÉIK","kepzes":"programtervező informatikus","elso":69,"osszes":205},{"int":"ME","kar":"ME-GÉIK","kepzes":"üzemmérnök-informatikus","elso":4,"osszes":28},{"int":"ME","kar":"ME-GÉIK","kepzes":"energetikai mérnöki","elso":8,"osszes":59},{"int":"ME","kar":"ME-GÉIK","kepzes":"gépészmérnöki","elso":57,"osszes":277},{"int":"ME","kar":"ME-GÉIK","kepzes":"ipari termék- és formatervező mérnöki","elso":12,"osszes":38},{"int":"ME","kar":"ME-GÉIK","kepzes":"járműmérnöki","elso":61,"osszes":195},{"int":"ME","kar":"ME-GÉIK","kepzes":"logisztikai mérnöki","elso":58,"osszes":174},{"int":"ME","kar":"ME-GÉIK","kepzes":"mechatronikai mérnöki","elso":24,"osszes":98},{"int":"ME","kar":"ME-GÉIK","kepzes":"műszaki menedzser","elso":15,"osszes":71},{"int":"ME","kar":"ME-GÉIK","kepzes":"villamosmérnöki","elso":74,"osszes":185},{"int":"ME","kar":"ME-GTK","kepzes":"emberi erőforrások","elso":34,"osszes":129},{"int":"ME","kar":"ME-GTK","kepzes":"gazdálkodási és menedzsment","elso":90,"osszes":318},{"int":"ME","kar":"ME-GTK","kepzes":"kereskedelem és marketing","elso":62,"osszes":261},{"int":"ME","kar":"ME-GTK","kepzes":"közgazdasági adatelemzés","elso":14,"osszes":66},{"int":"ME","kar":"ME-GTK","kepzes":"nemzetközi gazdálkodás","elso":30,"osszes":128},{"int":"ME","kar":"ME-GTK","kepzes":"pénzügy és számvitel","elso":68,"osszes":150},{"int":"ME","kar":"ME-GTK","kepzes":"turizmus-vendéglátás","elso":54,"osszes":161},{"int":"ME","kar":"ME-GTK","kepzes":"sportszervezés","elso":39,"osszes":158},{"int":"ME","kar":"ME-MFK","kepzes":"építőmérnöki","elso":30,"osszes":105},{"int":"ME","kar":"ME-MFK","kepzes":"környezetmérnöki","elso":23,"osszes":74},{"int":"ME","kar":"ME-MFK","kepzes":"műszaki földtudományi","elso":27,"osszes":75},{"int":"ME","kar":"ME-MFK","kepzes":"földrajz","elso":10,"osszes":25},{"int":"MILTON","kar":"MILTON","kepzes":"közösségszervezés","elso":37,"osszes":197},{"int":"MILTON","kar":"MILTON","kepzes":"szabad bölcsészet","elso":4,"osszes":27},{"int":"MILTON","kar":"MILTON","kepzes":"emberi erőforrások","elso":27,"osszes":146},{"int":"MILTON","kar":"MILTON","kepzes":"gazdálkodási és menedzsment","elso":24,"osszes":224},{"int":"MILTON","kar":"MILTON","kepzes":"nemzetközi gazdálkodás","elso":7,"osszes":66},{"int":"MILTON","kar":"MILTON","kepzes":"pénzügy és számvitel","elso":23,"osszes":152},{"int":"MILTON","kar":"MILTON","kepzes":"gazdaságinformatikus","elso":23,"osszes":154},{"int":"MILTON","kar":"MILTON","kepzes":"tanító","elso":4,"osszes":23},{"int":"MILTON","kar":"MILTON","kepzes":"kommunikáció- és médiatudomány","elso":51,"osszes":285},{"int":"MILTON","kar":"MILTON","kepzes":"nemzetközi tanulmányok","elso":11,"osszes":127},{"int":"MILTON","kar":"MILTON","kepzes":"politikatudományok","elso":12,"osszes":93},{"int":"MILTON","kar":"MILTON","kepzes":"szociológia","elso":9,"osszes":44},{"int":"MKE","kar":"MKE","kepzes":"képzőművészet-elmélet","elso":17,"osszes":45},{"int":"MKE","kar":"MKE","kepzes":"látványtervezés","elso":98,"osszes":174},{"int":"MKE","kar":"MKE","kepzes":"vizuális művészet","elso":43,"osszes":139},{"int":"MOME","kar":"MOME","kepzes":"animáció","elso":220,"osszes":297},{"int":"MOME","kar":"MOME","kepzes":"designkultúra","elso":40,"osszes":91},{"int":"MOME","kar":"MOME","kepzes":"építőművészet","elso":84,"osszes":131},{"int":"MOME","kar":"MOME","kepzes":"formatervezés","elso":65,"osszes":108},{"int":"MOME","kar":"MOME","kepzes":"fotográfia","elso":105,"osszes":178},{"int":"MOME","kar":"MOME","kepzes":"média design","elso":84,"osszes":180},{"int":"MOME","kar":"MOME","kepzes":"tárgyalkotás","elso":72,"osszes":122},{"int":"MOME","kar":"MOME","kepzes":"tervezőgrafika","elso":186,"osszes":326},{"int":"MOME","kar":"MOME","kepzes":"textiltervezés","elso":151,"osszes":206},{"int":"MTE","kar":"MTE","kepzes":"táncművész [klasszikus balett]","elso":20,"osszes":21},{"int":"MTE","kar":"MTE","kepzes":"táncművész [magyar néptánc]","elso":33,"osszes":34},{"int":"MTE","kar":"MTE","kepzes":"táncos és próbavezető [klasszikus balett]","elso":6,"osszes":8},{"int":"MTE","kar":"MTE","kepzes":"táncos és próbavezető [moderntánc]","elso":14,"osszes":44},{"int":"MTE","kar":"MTE","kepzes":"táncos és próbavezető [színházi tánc]","elso":67,"osszes":96},{"int":"NJE","kar":"NJE-GAMF","kepzes":"mérnökinformatikus","elso":133,"osszes":339},{"int":"NJE","kar":"NJE-GAMF","kepzes":"üzemmérnök-informatikus","elso":14,"osszes":74},{"int":"NJE","kar":"NJE-GAMF","kepzes":"gépészmérnöki","elso":129,"osszes":432},{"int":"NJE","kar":"NJE-GAMF","kepzes":"járműmérnöki","elso":145,"osszes":479},{"int":"NJE","kar":"NJE-GAMF","kepzes":"logisztikai mérnöki","elso":107,"osszes":281},{"int":"NJE","kar":"NJE-GAMF","kepzes":"villamosmérnöki","elso":41,"osszes":170},{"int":"NJE","kar":"NJE-GTK","kepzes":"gazdálkodási és menedzsment","elso":79,"osszes":269},{"int":"NJE","kar":"NJE-GTK","kepzes":"kereskedelem és marketing","elso":46,"osszes":211},{"int":"NJE","kar":"NJE-GTK","kepzes":"nemzetközi gazdálkodás","elso":20,"osszes":134},{"int":"NJE","kar":"NJE-GTK","kepzes":"pénzügy és számvitel","elso":71,"osszes":173},{"int":"NJE","kar":"NJE-GTK","kepzes":"turizmus-vendéglátás","elso":40,"osszes":123},{"int":"NJE","kar":"NJE-KVK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":12,"osszes":59},{"int":"NJE","kar":"NJE-KVK","kepzes":"kertészmérnöki","elso":15,"osszes":59},{"int":"NJE","kar":"NJE-KVK","kepzes":"mezőgazdasági mérnöki","elso":8,"osszes":46},{"int":"NKE","kar":"NKE-ÁNTK","kepzes":"közigazgatás-szervező","elso":97,"osszes":473},{"int":"NKE","kar":"NKE-ÁNTK","kepzes":"nemzetközi igazgatási","elso":92,"osszes":370},{"int":"NKE","kar":"NKE-HHK","kepzes":"állami légiközlekedési [állami légijármű-vezetői]","elso":106,"osszes":162},{"int":"NKE","kar":"NKE-HHK","kepzes":"állami légiközlekedési [katonai repülésirányító]","elso":24,"osszes":101},{"int":"NKE","kar":"NKE-HHK","kepzes":"állami légiközlekedési [katonai repülőműszaki]","elso":6,"osszes":42},{"int":"NKE","kar":"NKE-HHK","kepzes":"katonai infokommunikáció","elso":13,"osszes":83},{"int":"NKE","kar":"NKE-HHK","kepzes":"katonai logisztika","elso":36,"osszes":148},{"int":"NKE","kar":"NKE-HHK","kepzes":"katonai vezetői","elso":201,"osszes":375},{"int":"NKE","kar":"NKE-HHK","kepzes":"nemzetközi biztonság- és védelempolitikai","elso":86,"osszes":218},{"int":"NKE","kar":"NKE-NITK","kepzes":"anglisztika","elso":8,"osszes":62},{"int":"NKE","kar":"NKE-NITK","kepzes":"magyar","elso":2,"osszes":18},{"int":"NKE","kar":"NKE-NITK","kepzes":"történelem","elso":11,"osszes":78},{"int":"NKE","kar":"NKE-NITK","kepzes":"óvodapedagógus","elso":48,"osszes":198},{"int":"NKE","kar":"NKE-NITK","kepzes":"tanító","elso":42,"osszes":156},{"int":"NKE","kar":"NKE-NITK","kepzes":"kommunikáció- és médiatudomány","elso":34,"osszes":147},{"int":"NKE","kar":"NKE-RTK","kepzes":"büntetés-végrehajtási","elso":42,"osszes":73},{"int":"NKE","kar":"NKE-RTK","kepzes":"bűnügyi [bűnüldözési]","elso":269,"osszes":433},{"int":"NKE","kar":"NKE-RTK","kepzes":"bűnügyi [gazdasági nyomozó]","elso":37,"osszes":263},{"int":"NKE","kar":"NKE-RTK","kepzes":"bűnügyi [kiber nyomozó]","elso":57,"osszes":205},{"int":"NKE","kar":"NKE-RTK","kepzes":"bűnügyi igazgatási [bűnügyi nyomozó]","elso":61,"osszes":173},{"int":"NKE","kar":"NKE-RTK","kepzes":"katasztrófavédelem [iparbiztonsági]","elso":15,"osszes":84},{"int":"NKE","kar":"NKE-RTK","kepzes":"katasztrófavédelem [katasztrófavédelmi műveleti]","elso":27,"osszes":102},{"int":"NKE","kar":"NKE-RTK","kepzes":"katasztrófavédelem [tűzvédelmi és mentésirányítási]","elso":1,"osszes":27},{"int":"NKE","kar":"NKE-RTK","kepzes":"magánbiztonsági","elso":46,"osszes":128},{"int":"NKE","kar":"NKE-RTK","kepzes":"pénzügyi rendészeti [pénzügyi nyomozói]","elso":114,"osszes":347},{"int":"NKE","kar":"NKE-RTK","kepzes":"pénzügyi rendészeti [vámigazgatási és rendészeti]","elso":82,"osszes":294},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti [bevándorlási]","elso":9,"osszes":72},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti [határrendészeti rendőr]","elso":5,"osszes":61},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti [igazgatásrendészeti rendőr]","elso":16,"osszes":106},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti [közlekedésrendészeti rendőr]","elso":25,"osszes":138},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti [közrendvédelmi rendőr]","elso":67,"osszes":207},{"int":"NKE","kar":"NKE-RTK","kepzes":"rendészeti igazgatási [közrendvédelmi]","elso":21,"osszes":48},{"int":"NKE","kar":"NKE-RTK","kepzes":"tűzvédelmi mérnöki","elso":16,"osszes":77},{"int":"NKE","kar":"NKE-VTK","kepzes":"építőmérnöki","elso":39,"osszes":79},{"int":"NKE","kar":"NKE-VTK","kepzes":"környezetmérnöki","elso":10,"osszes":40},{"int":"NKE","kar":"NKE-VTK","kepzes":"vízügyi üzemeltetési mérnöki","elso":16,"osszes":71},{"int":"NYE","kar":"NYE","kepzes":"mezőgazdasági és élelmiszeripari gépészmérnöki","elso":5,"osszes":25},{"int":"NYE","kar":"NYE","kepzes":"mezőgazdasági mérnöki","elso":35,"osszes":81},{"int":"NYE","kar":"NYE","kepzes":"közösségszervezés","elso":16,"osszes":97},{"int":"NYE","kar":"NYE","kepzes":"szlavisztika [ukrán]","elso":9,"osszes":24},{"int":"NYE","kar":"NYE","kepzes":"gazdálkodási és menedzsment","elso":76,"osszes":254},{"int":"NYE","kar":"NYE","kepzes":"turizmus-vendéglátás","elso":41,"osszes":151},{"int":"NYE","kar":"NYE","kepzes":"gazdaságinformatikus","elso":21,"osszes":107},{"int":"NYE","kar":"NYE","kepzes":"mérnökinformatikus","elso":26,"osszes":100},{"int":"NYE","kar":"NYE","kepzes":"programtervező informatikus","elso":46,"osszes":180},{"int":"NYE","kar":"NYE","kepzes":"gépészmérnöki","elso":27,"osszes":124},{"int":"NYE","kar":"NYE","kepzes":"járműmérnöki","elso":32,"osszes":131},{"int":"NYE","kar":"NYE","kepzes":"közlekedésmérnöki","elso":17,"osszes":71},{"int":"NYE","kar":"NYE","kepzes":"műszaki menedzser","elso":11,"osszes":70},{"int":"NYE","kar":"NYE","kepzes":"képi ábrázolás","elso":19,"osszes":53},{"int":"NYE","kar":"NYE","kepzes":"csecsemő- és kisgyermeknevelő","elso":50,"osszes":147},{"int":"NYE","kar":"NYE","kepzes":"óvodapedagógus","elso":67,"osszes":188},{"int":"NYE","kar":"NYE","kepzes":"tanító","elso":37,"osszes":124},{"int":"NYE","kar":"NYE","kepzes":"edző","elso":33,"osszes":81},{"int":"NYE","kar":"NYE","kepzes":"sportszervezés","elso":14,"osszes":96},{"int":"NYE","kar":"NYE","kepzes":"szociálpedagógia","elso":18,"osszes":83},{"int":"NYE","kar":"NYE","kepzes":"biológia","elso":7,"osszes":43},{"int":"NYE","kar":"NYE","kepzes":"földrajz","elso":1,"osszes":8},{"int":"NYE","kar":"NYE","kepzes":"kémia","elso":1,"osszes":5},{"int":"OE","kar":"OE-AMK","kepzes":"földmérő és földrendező mérnöki","elso":52,"osszes":130},{"int":"OE","kar":"OE-AMK","kepzes":"gazdálkodási és menedzsment","elso":40,"osszes":136},{"int":"OE","kar":"OE-AMK","kepzes":"mérnökinformatikus","elso":53,"osszes":198},{"int":"OE","kar":"OE-AMK","kepzes":"gépészmérnöki","elso":25,"osszes":122},{"int":"OE","kar":"OE-AMK","kepzes":"mechatronikai mérnöki","elso":6,"osszes":40},{"int":"OE","kar":"OE-AMK","kepzes":"műszaki menedzser","elso":15,"osszes":67},{"int":"OE","kar":"OE-AMK","kepzes":"villamosmérnöki","elso":20,"osszes":79},{"int":"OE","kar":"OE-BGK","kepzes":"biztonságtechnikai mérnöki","elso":48,"osszes":182},{"int":"OE","kar":"OE-BGK","kepzes":"gépészmérnöki","elso":308,"osszes":1002},{"int":"OE","kar":"OE-BGK","kepzes":"kiberbiztonsági mérnöki","elso":168,"osszes":433},{"int":"OE","kar":"OE-BGK","kepzes":"mechatronikai mérnöki","elso":104,"osszes":454},{"int":"OE","kar":"OE-KGK","kepzes":"gazdálkodási és menedzsment","elso":16,"osszes":37},{"int":"OE","kar":"OE-KGK","kepzes":"gazdálkodási és menedzsment","elso":126,"osszes":860},{"int":"OE","kar":"OE-KGK","kepzes":"kereskedelem és marketing","elso":113,"osszes":664},{"int":"OE","kar":"OE-KGK","kepzes":"kereskedelem és marketing","elso":5,"osszes":31},{"int":"OE","kar":"OE-KGK","kepzes":"gazdaságinformatikus","elso":135,"osszes":625},{"int":"OE","kar":"OE-KGK","kepzes":"műszaki menedzser","elso":87,"osszes":383},{"int":"OE","kar":"OE-KVK","kepzes":"energetikai mérnöki","elso":28,"osszes":225},{"int":"OE","kar":"OE-KVK","kepzes":"villamos-üzemmérnöki","elso":7,"osszes":14},{"int":"OE","kar":"OE-KVK","kepzes":"villamos-üzemmérnöki","elso":19,"osszes":153},{"int":"OE","kar":"OE-KVK","kepzes":"villamosmérnöki","elso":6,"osszes":19},{"int":"OE","kar":"OE-KVK","kepzes":"villamosmérnöki","elso":364,"osszes":866},{"int":"OE","kar":"OE-KVK","kepzes":"szakoktató","elso":3,"osszes":11},{"int":"OE","kar":"OE-NIK","kepzes":"mérnökinformatikus","elso":605,"osszes":1581},{"int":"OE","kar":"OE-NIK","kepzes":"mérnökinformatikus","elso":5,"osszes":32},{"int":"OE","kar":"OE-NIK","kepzes":"üzemmérnök-informatikus","elso":89,"osszes":356},{"int":"OE","kar":"OE-RKK","kepzes":"ipari termék- és formatervező mérnöki","elso":37,"osszes":149},{"int":"OE","kar":"OE-RKK","kepzes":"könnyűipari mérnöki","elso":8,"osszes":59},{"int":"OE","kar":"OE-RKK","kepzes":"környezetmérnöki","elso":36,"osszes":177},{"int":"OE","kar":"OE-YBL","kepzes":"építészmérnöki","elso":317,"osszes":867},{"int":"OE","kar":"OE-YBL","kepzes":"építőmérnöki","elso":103,"osszes":544},{"int":"PE","kar":"PE-GKZ","kepzes":"gazdálkodási és menedzsment","elso":40,"osszes":118},{"int":"PE","kar":"PE-GKZ","kepzes":"pénzügy és számvitel","elso":28,"osszes":67},{"int":"PE","kar":"PE-GTK","kepzes":"emberi erőforrások","elso":26,"osszes":108},{"int":"PE","kar":"PE-GTK","kepzes":"gazdálkodási és menedzsment","elso":60,"osszes":277},{"int":"PE","kar":"PE-GTK","kepzes":"kereskedelem és marketing","elso":53,"osszes":264},{"int":"PE","kar":"PE-GTK","kepzes":"kereskedelem és marketing","elso":11,"osszes":49},{"int":"PE","kar":"PE-GTK","kepzes":"nemzetközi gazdálkodás","elso":26,"osszes":158},{"int":"PE","kar":"PE-GTK","kepzes":"pénzügy és számvitel","elso":66,"osszes":176},{"int":"PE","kar":"PE-GTK","kepzes":"turizmus-vendéglátás","elso":63,"osszes":247},{"int":"PE","kar":"PE-GTK","kepzes":"üzleti adattudomány","elso":10,"osszes":42},{"int":"PE","kar":"PE-GTK","kepzes":"műszaki menedzser","elso":2,"osszes":15},{"int":"PE","kar":"PE-GTK","kepzes":"műszaki menedzser","elso":22,"osszes":110},{"int":"PE","kar":"PE-HTK","kepzes":"anglisztika","elso":32,"osszes":105},{"int":"PE","kar":"PE-HTK","kepzes":"germanisztika [német]","elso":1,"osszes":10},{"int":"PE","kar":"PE-HTK","kepzes":"közösségszervezés","elso":15,"osszes":84},{"int":"PE","kar":"PE-HTK","kepzes":"magyar","elso":4,"osszes":21},{"int":"PE","kar":"PE-HTK","kepzes":"pszichológia","elso":149,"osszes":562},{"int":"PE","kar":"PE-HTK","kepzes":"óvodapedagógus","elso":42,"osszes":121},{"int":"PE","kar":"PE-HTK","kepzes":"tanító","elso":14,"osszes":67},{"int":"PE","kar":"PE-HTK","kepzes":"kommunikáció- és médiatudomány","elso":29,"osszes":174},{"int":"PE","kar":"PE-HTK","kepzes":"politikatudományok","elso":15,"osszes":69},{"int":"PE","kar":"PE-MIK","kepzes":"gazdaságinformatikus","elso":9,"osszes":48},{"int":"PE","kar":"PE-MIK","kepzes":"gazdaságinformatikus","elso":31,"osszes":173},{"int":"PE","kar":"PE-MIK","kepzes":"mérnökinformatikus","elso":49,"osszes":312},{"int":"PE","kar":"PE-MIK","kepzes":"mérnökinformatikus","elso":11,"osszes":44},{"int":"PE","kar":"PE-MIK","kepzes":"programtervező informatikus","elso":107,"osszes":288},{"int":"PE","kar":"PE-MIK","kepzes":"üzemmérnök-informatikus","elso":12,"osszes":54},{"int":"PE","kar":"PE-MIK","kepzes":"üzemmérnök-informatikus","elso":11,"osszes":28},{"int":"PE","kar":"PE-MIK","kepzes":"villamosmérnöki","elso":31,"osszes":138},{"int":"PE","kar":"PE-MK","kepzes":"anyagmérnöki","elso":12,"osszes":44},{"int":"PE","kar":"PE-MK","kepzes":"biomérnöki","elso":15,"osszes":70},{"int":"PE","kar":"PE-MK","kepzes":"gépészmérnöki","elso":65,"osszes":217},{"int":"PE","kar":"PE-MK","kepzes":"gépészmérnöki","elso":13,"osszes":44},{"int":"PE","kar":"PE-MK","kepzes":"környezetmérnöki","elso":14,"osszes":68},{"int":"PE","kar":"PE-MK","kepzes":"mechatronikai mérnöki","elso":6,"osszes":36},{"int":"PE","kar":"PE-MK","kepzes":"mechatronikai mérnöki","elso":17,"osszes":107},{"int":"PE","kar":"PE-MK","kepzes":"tesztmérnöki","elso":7,"osszes":38},{"int":"PE","kar":"PE-MK","kepzes":"tesztmérnöki","elso":5,"osszes":36},{"int":"PE","kar":"PE-MK","kepzes":"vegyészmérnöki","elso":47,"osszes":163},{"int":"PE","kar":"PE-MK","kepzes":"vízügyi üzemeltetési mérnöki","elso":5,"osszes":11},{"int":"PE","kar":"PE-MK","kepzes":"kémia","elso":10,"osszes":64},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"anglisztika","elso":42,"osszes":287},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"keleti nyelvek és kultúrák [arab]","elso":7,"osszes":22},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"keleti nyelvek és kultúrák [kínai]","elso":8,"osszes":65},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"magyar","elso":12,"osszes":81},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"pszichológia","elso":339,"osszes":1115},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"régészet","elso":21,"osszes":96},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"szabad bölcsészet","elso":32,"osszes":239},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"szlavisztika [orosz]","elso":7,"osszes":38},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"történelem","elso":25,"osszes":173},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"újlatin nyelvek és kultúrák [olasz]","elso":5,"osszes":32},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"újlatin nyelvek és kultúrák [spanyol]","elso":13,"osszes":43},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"gazdálkodási és menedzsment","elso":102,"osszes":732},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"gyógypedagógia","elso":89,"osszes":609},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"óvodapedagógus","elso":17,"osszes":66},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":1,"osszes":6},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"tanító","elso":10,"osszes":42},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"tanító [nemzetiségi tanító (német)]","elso":0,"osszes":1},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":126,"osszes":651},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"nemzetközi tanulmányok","elso":88,"osszes":535},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"politikatudományok","elso":42,"osszes":272},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"szociálpedagógia","elso":24,"osszes":139},{"int":"PPKE","kar":"PPKE-BTK","kepzes":"szociológia","elso":38,"osszes":343},{"int":"PPKE","kar":"PPKE-ITK","kepzes":"mérnökinformatikus","elso":36,"osszes":381},{"int":"PPKE","kar":"PPKE-ITK","kepzes":"molekuláris bionika mérnöki","elso":65,"osszes":218},{"int":"PPKE","kar":"PPKE-JÁK","kepzes":"igazságügyi igazgatási","elso":35,"osszes":291},{"int":"PTE","kar":"PTE-BTK","kepzes":"anglisztika","elso":37,"osszes":185},{"int":"PTE","kar":"PTE-BTK","kepzes":"germanisztika [német nemzetiségi]","elso":1,"osszes":6},{"int":"PTE","kar":"PTE-BTK","kepzes":"germanisztika [német]","elso":1,"osszes":17},{"int":"PTE","kar":"PTE-BTK","kepzes":"közösségszervezés","elso":27,"osszes":105},{"int":"PTE","kar":"PTE-BTK","kepzes":"magyar","elso":20,"osszes":72},{"int":"PTE","kar":"PTE-BTK","kepzes":"néprajz","elso":5,"osszes":26},{"int":"PTE","kar":"PTE-BTK","kepzes":"ókori nyelvek és kultúrák [klasszika-filológia]","elso":10,"osszes":17},{"int":"PTE","kar":"PTE-BTK","kepzes":"pedagógia","elso":3,"osszes":38},{"int":"PTE","kar":"PTE-BTK","kepzes":"pszichológia","elso":200,"osszes":690},{"int":"PTE","kar":"PTE-BTK","kepzes":"régészet","elso":14,"osszes":46},{"int":"PTE","kar":"PTE-BTK","kepzes":"romológia","elso":2,"osszes":10},{"int":"PTE","kar":"PTE-BTK","kepzes":"szabad bölcsészet","elso":15,"osszes":85},{"int":"PTE","kar":"PTE-BTK","kepzes":"szlavisztika [horvát]","elso":3,"osszes":6},{"int":"PTE","kar":"PTE-BTK","kepzes":"szlavisztika [orosz]","elso":6,"osszes":18},{"int":"PTE","kar":"PTE-BTK","kepzes":"történelem","elso":16,"osszes":86},{"int":"PTE","kar":"PTE-BTK","kepzes":"újlatin nyelvek és kultúrák [francia]","elso":3,"osszes":16},{"int":"PTE","kar":"PTE-BTK","kepzes":"újlatin nyelvek és kultúrák [olasz]","elso":1,"osszes":13},{"int":"PTE","kar":"PTE-BTK","kepzes":"újlatin nyelvek és kultúrák [spanyol]","elso":7,"osszes":19},{"int":"PTE","kar":"PTE-BTK","kepzes":"informatikus könyvtáros","elso":5,"osszes":30},{"int":"PTE","kar":"PTE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":56,"osszes":236},{"int":"PTE","kar":"PTE-BTK","kepzes":"nemzetközi tanulmányok","elso":35,"osszes":160},{"int":"PTE","kar":"PTE-BTK","kepzes":"politikatudományok","elso":7,"osszes":88},{"int":"PTE","kar":"PTE-BTK","kepzes":"szociális munka","elso":19,"osszes":67},{"int":"PTE","kar":"PTE-BTK","kepzes":"szociológia","elso":22,"osszes":117},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [ápoló]","elso":40,"osszes":170},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [dietetikus]","elso":83,"osszes":456},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":283,"osszes":916},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":53,"osszes":211},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":81,"osszes":321},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [mentőtiszt]","elso":60,"osszes":228},{"int":"PTE","kar":"PTE-ETK","kepzes":"ápolás és betegellátás [szülésznő]","elso":17,"osszes":112},{"int":"PTE","kar":"PTE-ETK","kepzes":"egészségügyi gondozás és prevenció [népegészségügyi ellenőr]","elso":3,"osszes":40},{"int":"PTE","kar":"PTE-ETK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":7,"osszes":37},{"int":"PTE","kar":"PTE-ETK","kepzes":"orvosi diagnosztikai analitikus","elso":28,"osszes":140},{"int":"PTE","kar":"PTE-ETK","kepzes":"rekreáció és életmód","elso":31,"osszes":173},{"int":"PTE","kar":"PTE-ETK","kepzes":"sporttudomány","elso":22,"osszes":124},{"int":"PTE","kar":"PTE-KPVK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":6,"osszes":27},{"int":"PTE","kar":"PTE-KPVK","kepzes":"környezetkultúra","elso":7,"osszes":10},{"int":"PTE","kar":"PTE-KPVK","kepzes":"csecsemő- és kisgyermeknevelő","elso":14,"osszes":68},{"int":"PTE","kar":"PTE-KPVK","kepzes":"gyógypedagógia","elso":35,"osszes":175},{"int":"PTE","kar":"PTE-KPVK","kepzes":"óvodapedagógus","elso":91,"osszes":253},{"int":"PTE","kar":"PTE-KPVK","kepzes":"óvodapedagógus","elso":23,"osszes":87},{"int":"PTE","kar":"PTE-KPVK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":4,"osszes":17},{"int":"PTE","kar":"PTE-KPVK","kepzes":"tanító","elso":4,"osszes":35},{"int":"PTE","kar":"PTE-KPVK","kepzes":"tanító","elso":49,"osszes":167},{"int":"PTE","kar":"PTE-KPVK","kepzes":"tanító [nemzetiségi tanító (német)]","elso":0,"osszes":4},{"int":"PTE","kar":"PTE-KPVK","kepzes":"szociálpedagógia","elso":11,"osszes":28},{"int":"PTE","kar":"PTE-KTK","kepzes":"gazdálkodási és menedzsment","elso":134,"osszes":492},{"int":"PTE","kar":"PTE-KTK","kepzes":"kereskedelem és marketing","elso":126,"osszes":430},{"int":"PTE","kar":"PTE-KTK","kepzes":"pénzügy és számvitel","elso":127,"osszes":292},{"int":"PTE","kar":"PTE-KTK","kepzes":"turizmus-vendéglátás","elso":83,"osszes":281},{"int":"PTE","kar":"PTE-MIK","kepzes":"mérnökinformatikus","elso":123,"osszes":316},{"int":"PTE","kar":"PTE-MIK","kepzes":"építészmérnöki","elso":102,"osszes":392},{"int":"PTE","kar":"PTE-MIK","kepzes":"építőmérnöki","elso":45,"osszes":209},{"int":"PTE","kar":"PTE-MIK","kepzes":"gépészmérnöki","elso":95,"osszes":252},{"int":"PTE","kar":"PTE-MIK","kepzes":"ipari termék- és formatervező mérnöki","elso":18,"osszes":70},{"int":"PTE","kar":"PTE-MIK","kepzes":"környezetmérnöki","elso":13,"osszes":77},{"int":"PTE","kar":"PTE-MIK","kepzes":"villamosmérnöki","elso":65,"osszes":186},{"int":"PTE","kar":"PTE-MIK","kepzes":"építőművészet","elso":38,"osszes":89},{"int":"PTE","kar":"PTE-MK","kepzes":"alkotóművészet és muzikológia [elektronikus zenei médiaművészet]","elso":22,"osszes":46},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus ének]","elso":9,"osszes":21},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus fagott]","elso":0,"osszes":1},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus fuvola]","elso":1,"osszes":7},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus gitár]","elso":1,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus gordon]","elso":1,"osszes":1},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus gordonka]","elso":0,"osszes":5},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus harsona]","elso":1,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus hegedű]","elso":0,"osszes":3},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus klarinét]","elso":1,"osszes":5},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus kürt]","elso":0,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":0,"osszes":3},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus oboa]","elso":1,"osszes":4},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus orgona]","elso":1,"osszes":4},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus trombita]","elso":0,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus tuba]","elso":1,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":3,"osszes":7},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [klasszikus zongora]","elso":1,"osszes":8},{"int":"PTE","kar":"PTE-MK","kepzes":"előadó-művészet [zenekarvezetés]","elso":0,"osszes":2},{"int":"PTE","kar":"PTE-MK","kepzes":"fotográfia","elso":14,"osszes":46},{"int":"PTE","kar":"PTE-MK","kepzes":"tárgyalkotás","elso":35,"osszes":105},{"int":"PTE","kar":"PTE-TTK","kepzes":"szőlész-borász mérnöki","elso":12,"osszes":37},{"int":"PTE","kar":"PTE-TTK","kepzes":"gazdaságinformatikus","elso":65,"osszes":199},{"int":"PTE","kar":"PTE-TTK","kepzes":"programtervező informatikus","elso":53,"osszes":208},{"int":"PTE","kar":"PTE-TTK","kepzes":"edző","elso":28,"osszes":114},{"int":"PTE","kar":"PTE-TTK","kepzes":"sportszervezés","elso":47,"osszes":180},{"int":"PTE","kar":"PTE-TTK","kepzes":"biológia","elso":54,"osszes":336},{"int":"PTE","kar":"PTE-TTK","kepzes":"fizika","elso":6,"osszes":31},{"int":"PTE","kar":"PTE-TTK","kepzes":"földrajz","elso":16,"osszes":63},{"int":"PTE","kar":"PTE-TTK","kepzes":"földtudományi","elso":15,"osszes":51},{"int":"PTE","kar":"PTE-TTK","kepzes":"kémia","elso":9,"osszes":55},{"int":"PTE","kar":"PTE-TTK","kepzes":"matematika","elso":6,"osszes":32},{"int":"PTF","kar":"PTF","kepzes":"szociális munka","elso":1,"osszes":5},{"int":"SE","kar":"SE-EKK","kepzes":"egészségügyi szervező","elso":16,"osszes":85},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [ápoló]","elso":68,"osszes":236},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [dietetikus]","elso":148,"osszes":742},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":589,"osszes":1384},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [hang-, beszéd- és nyelésterapeuta]","elso":13,"osszes":96},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [mentőtiszt]","elso":79,"osszes":329},{"int":"SE","kar":"SE-ETK","kepzes":"ápolás és betegellátás [szülésznő]","elso":63,"osszes":260},{"int":"SE","kar":"SE-ETK","kepzes":"egészségügyi gondozás és prevenció [népegészségügyi ellenőr]","elso":7,"osszes":52},{"int":"SE","kar":"SE-ETK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":29,"osszes":164},{"int":"SE","kar":"SE-PAK","kepzes":"konduktor","elso":120,"osszes":276},{"int":"SOE","kar":"SOE-BPK","kepzes":"csecsemő- és kisgyermeknevelő","elso":31,"osszes":79},{"int":"SOE","kar":"SOE-BPK","kepzes":"gyógypedagógia","elso":23,"osszes":105},{"int":"SOE","kar":"SOE-BPK","kepzes":"óvodapedagógus","elso":74,"osszes":202},{"int":"SOE","kar":"SOE-BPK","kepzes":"óvodapedagógus [nemzetiségi óvodapedagógus (német)]","elso":6,"osszes":14},{"int":"SOE","kar":"SOE-BPK","kepzes":"tanító","elso":16,"osszes":67},{"int":"SOE","kar":"SOE-BPK","kepzes":"rekreáció és életmód","elso":16,"osszes":60},{"int":"SOE","kar":"SOE-BPK","kepzes":"sportszervezés","elso":12,"osszes":52},{"int":"SOE","kar":"SOE-BPK","kepzes":"szociálpedagógia","elso":3,"osszes":30},{"int":"SOE","kar":"SOE-EMK","kepzes":"földmérő és földrendező mérnöki","elso":35,"osszes":96},{"int":"SOE","kar":"SOE-EMK","kepzes":"természetvédelmi mérnöki","elso":13,"osszes":85},{"int":"SOE","kar":"SOE-EMK","kepzes":"vadgazda mérnöki","elso":24,"osszes":98},{"int":"SOE","kar":"SOE-FMK","kepzes":"gazdaságinformatikus","elso":4,"osszes":37},{"int":"SOE","kar":"SOE-FMK","kepzes":"faipari mérnöki","elso":74,"osszes":109},{"int":"SOE","kar":"SOE-FMK","kepzes":"ipari termék- és formatervező mérnöki","elso":14,"osszes":43},{"int":"SOE","kar":"SOE-FMK","kepzes":"építőművészet","elso":14,"osszes":58},{"int":"SOE","kar":"SOE-FMK","kepzes":"formatervezés","elso":5,"osszes":34},{"int":"SOE","kar":"SOE-FMK","kepzes":"tervezőgrafika","elso":24,"osszes":106},{"int":"SOE","kar":"SOE-FMK","kepzes":"kommunikáció- és médiatudomány","elso":21,"osszes":81},{"int":"SOE","kar":"SOE-LKK","kepzes":"gazdálkodási és menedzsment","elso":26,"osszes":151},{"int":"SOE","kar":"SOE-LKK","kepzes":"kereskedelem és marketing","elso":35,"osszes":137},{"int":"SOE","kar":"SOE-LKK","kepzes":"pénzügy és számvitel","elso":37,"osszes":109},{"int":"SOE","kar":"SOE-LKK","kepzes":"turizmus-vendéglátás","elso":27,"osszes":104},{"int":"SRHE","kar":"SRHE","kepzes":"szociális munka","elso":2,"osszes":8},{"int":"SZE","kar":"SZE-AHJK","kepzes":"gépészmérnöki","elso":146,"osszes":616},{"int":"SZE","kar":"SZE-AHJK","kepzes":"járműmérnöki","elso":376,"osszes":838},{"int":"SZE","kar":"SZE-AK","kepzes":"közösségszervezés","elso":48,"osszes":211},{"int":"SZE","kar":"SZE-AK","kepzes":"gyógypedagógia","elso":130,"osszes":401},{"int":"SZE","kar":"SZE-AK","kepzes":"szakoktató","elso":4,"osszes":15},{"int":"SZE","kar":"SZE-AK","kepzes":"tanító","elso":77,"osszes":212},{"int":"SZE","kar":"SZE-AK","kepzes":"rekreáció és életmód","elso":92,"osszes":219},{"int":"SZE","kar":"SZE-AK","kepzes":"nemzetközi tanulmányok","elso":41,"osszes":179},{"int":"SZE","kar":"SZE-AK","kepzes":"szociális munka","elso":3,"osszes":20},{"int":"SZE","kar":"SZE-AK","kepzes":"szociálpedagógia","elso":24,"osszes":94},{"int":"SZE","kar":"SZE-AK","kepzes":"szociológia","elso":24,"osszes":100},{"int":"SZE","kar":"SZE-AKMK","kepzes":"agrár- és üzleti digitalizáció","elso":9,"osszes":46},{"int":"SZE","kar":"SZE-AKMK","kepzes":"állattenyésztő mérnöki","elso":7,"osszes":39},{"int":"SZE","kar":"SZE-AKMK","kepzes":"élelmiszermérnöki","elso":11,"osszes":54},{"int":"SZE","kar":"SZE-AKMK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":5,"osszes":20},{"int":"SZE","kar":"SZE-AKMK","kepzes":"mezőgazdasági és élelmiszeripari gépészmérnöki","elso":10,"osszes":27},{"int":"SZE","kar":"SZE-AKMK","kepzes":"mezőgazdasági mérnöki","elso":24,"osszes":72},{"int":"SZE","kar":"SZE-AKMK","kepzes":"mezőgazdasági vízgazdálkodási és környezettechnológiai mérnöki","elso":7,"osszes":28},{"int":"SZE","kar":"SZE-AKMK","kepzes":"környezetmérnöki","elso":21,"osszes":102},{"int":"SZE","kar":"SZE-DFK","kepzes":"igazságügyi igazgatási","elso":36,"osszes":172},{"int":"SZE","kar":"SZE-DFK","kepzes":"személyügyi, munkaügyi és szociális igazgatási","elso":29,"osszes":113},{"int":"SZE","kar":"SZE-ÉÉKK","kepzes":"építészmérnöki","elso":106,"osszes":383},{"int":"SZE","kar":"SZE-ÉÉKK","kepzes":"építőmérnöki","elso":69,"osszes":264},{"int":"SZE","kar":"SZE-ÉÉKK","kepzes":"közlekedésmérnöki","elso":56,"osszes":252},{"int":"SZE","kar":"SZE-ÉÉKK","kepzes":"logisztikai mérnöki","elso":108,"osszes":338},{"int":"SZE","kar":"SZE-ÉÉKK","kepzes":"műszaki menedzser","elso":41,"osszes":219},{"int":"SZE","kar":"SZE-ESK","kepzes":"ápolás és betegellátás [ápoló]","elso":23,"osszes":73},{"int":"SZE","kar":"SZE-ESK","kepzes":"ápolás és betegellátás [szülésznő]","elso":22,"osszes":76},{"int":"SZE","kar":"SZE-ESK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":15,"osszes":64},{"int":"SZE","kar":"SZE-ESK","kepzes":"egészségügyi szervező","elso":10,"osszes":57},{"int":"SZE","kar":"SZE-GK","kepzes":"gazdálkodási és menedzsment","elso":204,"osszes":671},{"int":"SZE","kar":"SZE-GK","kepzes":"kereskedelem és marketing","elso":190,"osszes":587},{"int":"SZE","kar":"SZE-GK","kepzes":"turizmus-vendéglátás","elso":75,"osszes":352},{"int":"SZE","kar":"SZE-IVK","kepzes":"gazdaságinformatikus","elso":96,"osszes":405},{"int":"SZE","kar":"SZE-IVK","kepzes":"mérnökinformatikus","elso":212,"osszes":604},{"int":"SZE","kar":"SZE-IVK","kepzes":"programtervező informatikus","elso":84,"osszes":269},{"int":"SZE","kar":"SZE-IVK","kepzes":"mechatronikai mérnöki","elso":61,"osszes":275},{"int":"SZE","kar":"SZE-IVK","kepzes":"villamosmérnöki","elso":114,"osszes":337},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus ének]","elso":6,"osszes":19},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus fagott]","elso":0,"osszes":1},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus furulya]","elso":1,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus fuvola]","elso":2,"osszes":15},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus gitár]","elso":0,"osszes":3},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus gordon]","elso":1,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus gordonka]","elso":1,"osszes":11},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus harsona]","elso":1,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus hegedű]","elso":6,"osszes":13},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus klarinét]","elso":2,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus kürt]","elso":1,"osszes":4},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":1,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus oboa]","elso":0,"osszes":5},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus szaxofon]","elso":0,"osszes":1},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus trombita]","elso":0,"osszes":4},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus tuba]","elso":0,"osszes":2},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":1,"osszes":4},{"int":"SZE","kar":"SZE-MUK","kepzes":"előadó-művészet [klasszikus zongora]","elso":5,"osszes":17},{"int":"SZE","kar":"SZE-MUK","kepzes":"építőművészet","elso":21,"osszes":95},{"int":"SZE","kar":"SZE-MUK","kepzes":"formatervezés","elso":27,"osszes":85},{"int":"SZE","kar":"SZE-MUK","kepzes":"tervezőgrafika","elso":65,"osszes":176},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [film- és televíziórendezés]","elso":143,"osszes":314},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [filmírás]","elso":53,"osszes":142},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [gyártásszervezés]","elso":32,"osszes":75},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [mozgóképes filmhang]","elso":40,"osszes":82},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [mozgóképes filmvágás]","elso":83,"osszes":183},{"int":"SZFE","kar":"SZFE","kepzes":"mozgókép [operatőr]","elso":87,"osszes":182},{"int":"SZFE","kar":"SZFE","kepzes":"televíziós műsorkészítő","elso":34,"osszes":106},{"int":"SZFE","kar":"SZFE","kepzes":"drámainstruktor","elso":32,"osszes":103},{"int":"SZTE","kar":"SZTE-ÁJK","kepzes":"személyügyi, munkaügyi és szociális igazgatási","elso":46,"osszes":167},{"int":"SZTE","kar":"SZTE-ÁJK","kepzes":"nemzetközi tanulmányok","elso":91,"osszes":292},{"int":"SZTE","kar":"SZTE-ÁJK","kepzes":"politikatudományok","elso":22,"osszes":131},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus ének]","elso":4,"osszes":26},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus fagott]","elso":0,"osszes":1},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus furulya]","elso":1,"osszes":1},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus fuvola]","elso":5,"osszes":9},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus gitár]","elso":4,"osszes":10},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus gordonka]","elso":1,"osszes":5},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus harsona]","elso":0,"osszes":3},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus hegedű]","elso":3,"osszes":9},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus klarinét]","elso":0,"osszes":3},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus kürt]","elso":0,"osszes":2},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus mélyhegedű]","elso":0,"osszes":1},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus orgona]","elso":1,"osszes":1},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus trombita]","elso":0,"osszes":4},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus tuba]","elso":3,"osszes":3},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus ütőhangszerek]","elso":2,"osszes":4},{"int":"SZTE","kar":"SZTE-BBMK","kepzes":"előadó-művészet [klasszikus zongora]","elso":4,"osszes":17},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"anglisztika","elso":79,"osszes":252},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"germanisztika [német]","elso":5,"osszes":30},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"keleti nyelvek és kultúrák [altajisztika]","elso":3,"osszes":14},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"magyar","elso":16,"osszes":52},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"néprajz","elso":9,"osszes":28},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"ókori nyelvek és kultúrák [klasszika-filológia]","elso":1,"osszes":16},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"pedagógia","elso":3,"osszes":53},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"pszichológia","elso":213,"osszes":690},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"régészet","elso":7,"osszes":41},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szabad bölcsészet","elso":17,"osszes":116},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szlavisztika [bolgár]","elso":0,"osszes":1},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szlavisztika [orosz]","elso":4,"osszes":19},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szlavisztika [szerb nemzetiségi]","elso":1,"osszes":2},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szlavisztika [szerb]","elso":1,"osszes":8},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"történelem","elso":25,"osszes":108},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"újlatin nyelvek és kultúrák [francia]","elso":3,"osszes":13},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"újlatin nyelvek és kultúrák [olasz]","elso":2,"osszes":19},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"újlatin nyelvek és kultúrák [spanyol]","elso":6,"osszes":20},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"informatikus könyvtáros","elso":10,"osszes":54},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"kommunikáció- és médiatudomány","elso":122,"osszes":384},{"int":"SZTE","kar":"SZTE-BTK","kepzes":"szociológia","elso":22,"osszes":127},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"ápolás és betegellátás [ápoló]","elso":43,"osszes":164},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"ápolás és betegellátás [gyógytornász]","elso":222,"osszes":708},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"ápolás és betegellátás [mentőtiszt]","elso":53,"osszes":210},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"ápolás és betegellátás [szülésznő]","elso":22,"osszes":109},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"egészségügyi gondozás és prevenció [dentálhigiénikus]","elso":72,"osszes":202},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"egészségügyi gondozás és prevenció [védőnő]","elso":35,"osszes":128},{"int":"SZTE","kar":"SZTE-ETSZK","kepzes":"szociális munka","elso":16,"osszes":60},{"int":"SZTE","kar":"SZTE-GTK","kepzes":"gazdálkodási és menedzsment","elso":232,"osszes":802},{"int":"SZTE","kar":"SZTE-GTK","kepzes":"kereskedelem és marketing","elso":220,"osszes":793},{"int":"SZTE","kar":"SZTE-GTK","kepzes":"pénzügy és számvitel","elso":153,"osszes":455},{"int":"SZTE","kar":"SZTE-GTK","kepzes":"turizmus-vendéglátás","elso":90,"osszes":402},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"germanisztika [német nemzetiségi]","elso":0,"osszes":2},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"közösségszervezés","elso":46,"osszes":216},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"képi ábrázolás","elso":62,"osszes":127},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"mozgóképkultúra és médiaismeret","elso":38,"osszes":87},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"zenekultúra","elso":4,"osszes":14},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"gyógypedagógia","elso":127,"osszes":446},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"óvodapedagógus","elso":159,"osszes":377},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"tanító","elso":69,"osszes":211},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"tanító [nemzetiségi tanító (román)]","elso":0,"osszes":1},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"edző","elso":62,"osszes":162},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"rekreáció és életmód","elso":53,"osszes":220},{"int":"SZTE","kar":"SZTE-JGYPK","kepzes":"szociálpedagógia","elso":27,"osszes":108},{"int":"SZTE","kar":"SZTE-MGK","kepzes":"agrár- és üzleti digitalizáció","elso":13,"osszes":48},{"int":"SZTE","kar":"SZTE-MGK","kepzes":"gazdasági és vidékfejlesztési agrármérnöki","elso":17,"osszes":80},{"int":"SZTE","kar":"SZTE-MGK","kepzes":"mezőgazdasági mérnöki","elso":38,"osszes":112},{"int":"SZTE","kar":"SZTE-MGK","kepzes":"vadgazda mérnöki","elso":8,"osszes":23},{"int":"SZTE","kar":"SZTE-MK","kepzes":"élelmiszermérnöki","elso":46,"osszes":142},{"int":"SZTE","kar":"SZTE-MK","kepzes":"mezőgazdasági és élelmiszeripari gépészmérnöki","elso":0,"osszes":15},{"int":"SZTE","kar":"SZTE-MK","kepzes":"gépészmérnöki","elso":74,"osszes":302},{"int":"SZTE","kar":"SZTE-MK","kepzes":"ipari termék- és formatervező mérnöki","elso":21,"osszes":83},{"int":"SZTE","kar":"SZTE-MK","kepzes":"mechatronikai mérnöki","elso":76,"osszes":221},{"int":"SZTE","kar":"SZTE-MK","kepzes":"műszaki menedzser","elso":40,"osszes":174},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"gazdaságinformatikus","elso":72,"osszes":320},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"mérnökinformatikus","elso":89,"osszes":392},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"programtervező informatikus","elso":231,"osszes":526},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"üzemmérnök-informatikus","elso":21,"osszes":133},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"biomérnöki","elso":35,"osszes":147},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"fizikus-mérnöki","elso":17,"osszes":71},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"környezetmérnöki","elso":33,"osszes":93},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"molekuláris bionika mérnöki","elso":21,"osszes":104},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"vegyészmérnöki","elso":23,"osszes":143},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"villamosmérnöki","elso":39,"osszes":121},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"biológia","elso":112,"osszes":468},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"fizika","elso":24,"osszes":89},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"földrajz","elso":24,"osszes":93},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"földtudományi","elso":14,"osszes":69},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"kémia","elso":17,"osszes":103},{"int":"SZTE","kar":"SZTE-TTIK","kepzes":"matematika","elso":30,"osszes":119},{"int":"TF","kar":"TF","kepzes":"edző","elso":269,"osszes":699},{"int":"TF","kar":"TF","kepzes":"rekreáció és életmód","elso":128,"osszes":592},{"int":"TF","kar":"TF","kepzes":"sportszervezés","elso":220,"osszes":689},{"int":"TF","kar":"TF","kepzes":"sporttudomány","elso":118,"osszes":424},{"int":"THE","kar":"THE","kepzes":"szőlész-borász mérnöki","elso":8,"osszes":37},{"int":"THE","kar":"THE","kepzes":"gazdálkodási és menedzsment","elso":19,"osszes":69},{"int":"THE","kar":"THE","kepzes":"turizmus-vendéglátás","elso":22,"osszes":106},{"int":"THE","kar":"THE","kepzes":"programtervező informatikus","elso":3,"osszes":22},{"int":"THE","kar":"THE","kepzes":"csecsemő- és kisgyermeknevelő","elso":6,"osszes":38},{"int":"THE","kar":"THE","kepzes":"óvodapedagógus","elso":31,"osszes":67},{"int":"THE","kar":"THE","kepzes":"tanító","elso":12,"osszes":43},{"int":"VÉF","kar":"VÉF","kepzes":"ápolás és betegellátás [ápoló]","elso":7,"osszes":22},{"int":"VÉF","kar":"VÉF","kepzes":"csecsemő- és kisgyermeknevelő","elso":10,"osszes":26},{"int":"VÉF","kar":"VÉF","kepzes":"szociálpedagógia","elso":10,"osszes":36}];
+
+// ── DROPDOWN ─────────────────────────────────────────────────────────────
+function initDropdowns(){
+  const ints = [...new Set(DB.map(r=>r.int))].sort();
+  const sel = document.getElementById('sel_int');
+  ints.forEach(i=>{const o=document.createElement('option');o.value=i;o.textContent=i;sel.appendChild(o);});
+}
+
+function updateKar(){
+  const int = document.getElementById('sel_int').value;
+  const selKar = document.getElementById('sel_kar');
+  const selKep = document.getElementById('sel_kepzes');
+  selKar.innerHTML='<option value="">— válassz kart —</option>';
+  selKep.innerHTML='<option value="">— előbb kart —</option>';
+  selKar.disabled = !int; selKep.disabled = true;
+  if(!int)return;
+  const kars = [...new Set(DB.filter(r=>r.int===int).map(r=>r.kar))].sort();
+  kars.forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;selKar.appendChild(o);});
+  if(kars.length===1){selKar.value=kars[0];updateKepzes();}
+}
+
+function updateKepzes(){
+  const int=document.getElementById('sel_int').value;
+  const kar=document.getElementById('sel_kar').value;
+  const selKep=document.getElementById('sel_kepzes');
+  selKep.innerHTML='<option value="">— válassz képzést —</option>';
+  selKep.disabled=!kar;
+  if(!kar)return;
+  const kepzesek=DB.filter(r=>r.int===int&&r.kar===kar).sort((a,b)=>a.kepzes.localeCompare(b.kepzes,'hu'));
+  kepzesek.forEach(r=>{const o=document.createElement('option');o.value=r.kepzes;o.textContent=r.kepzes+' ('+r.elso+' / '+r.osszes+' fő)';selKep.appendChild(o);});
+  if(kepzesek.length===1){selKep.value=kepzesek[0].kepzes;autofillFromDB();}
+}
+
+function autofillFromDB(){
+  const int=document.getElementById('sel_int').value;
+  const kar=document.getElementById('sel_kar').value;
+  const kep=document.getElementById('sel_kepzes').value;
+  const note=document.getElementById('autofillNote');
+  if(!kep){note.style.display='none';return;}
+  const row=DB.find(r=>r.int===int&&r.kar===kar&&r.kepzes===kep);
+  if(!row){note.style.display='none';return;}
+  document.getElementById('curr_osszes').value=row.osszes;
+  document.getElementById('curr_ferohely').value='';
+  note.style.display='block';
+  note.textContent='✓ Automatikusan kitöltve: '+row.osszes+' összes jelentkező ('+row.elso+' elsőhelyes). A becsült férőhelyeket kézzel add meg!';
+  saveState();
+}
+
+// ── TÁBLA ─────────────────────────────────────────────────────────────────
+let rows=[];
+let nextId=1;
+
+function addRow(y,o,f,p){
+  rows.push({id:nextId++,year:y!==undefined?y:'',osszes:o!==undefined?o:'',felv:f!==undefined?f:'',pont:p!==undefined?p:''});
+  renderTable(); updateLambdaVisual(); saveState();
+}
+
+function deleteRow(id){
+  rows=rows.filter(r=>r.id!==id);
+  renderTable(); updateLambdaVisual(); saveState();
+}
+
+function clearAll(){
+  if(rows.length===0||confirm('Biztosan törlöd az összes sort és az elmentett adatokat?')){
+    rows=[];nextId=1;renderTable();updateLambdaVisual();localStorage.removeItem('felveteli_state');
+  }
+}
+
+function setField(id,field,val){
+  const row=rows.find(r=>r.id===id);
+  if(row){row[field]=val;saveState();}
+}
+
+function renderTable(){
+  const tb=document.getElementById('histBody');
+  tb.innerHTML='';
+  [...rows].sort((a,b)=>(parseFloat(a.year)||0)-(parseFloat(b.year)||0)).forEach(row=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input type="number" value="${row.year}" placeholder="2022" style="width:68px;"
+        oninput="setField(${row.id},'year',this.value);validateCell(this,2010,2030)"
+        onblur="validateCell(this,2010,2030)"></td>
+      <td><input type="number" value="${row.osszes}" placeholder="900"
+        oninput="setField(${row.id},'osszes',this.value);validateCell(this,1,99999)"
+        onblur="validateCell(this,1,99999)"></td>
+      <td><input type="number" value="${row.felv}" placeholder="120"
+        oninput="setField(${row.id},'felv',this.value);validateCell(this,1,9999)"
+        onblur="validateCell(this,1,9999)"></td>
+      <td><input type="number" value="${row.pont}" placeholder="430"
+        oninput="setField(${row.id},'pont',this.value);validateCell(this,200,500)"
+        onblur="validateCell(this,200,500)"></td>
+      <td><button class="del-btn" onclick="deleteRow(${row.id})">Törlés</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+
+function validateCell(input,min,max){
+  const v=parseFloat(input.value);
+  if(input.value===''||isNaN(v)||v<min||v>max){input.classList.add('err');}
+  else{input.classList.remove('err');}
+}
+
+// ── VALIDÁCIÓ ─────────────────────────────────────────────────────────────
+function validateParam(input,min,max){
+  const v=parseFloat(input.value);
+  if(input.value===''||isNaN(v)||v<min||v>max){input.classList.add('err');}
+  else{input.classList.remove('err');}
+  saveState();
+}
+
+function validateScore(){
+  const mn=parseFloat(document.getElementById('score_min').value);
+  const mx=parseFloat(document.getElementById('score_max').value);
+  const err=document.getElementById('err_score');
+  const invalid=isNaN(mn)||isNaN(mx)||mn>mx||mn<200||mx>500;
+  document.getElementById('score_min').classList.toggle('err',invalid);
+  document.getElementById('score_max').classList.toggle('err',invalid);
+  err.classList.toggle('show',invalid);
+  saveState();
+}
+
+function validateAll(){
+  let ok=true;
+  const validRows=rows.filter(r=>r.year&&r.osszes&&r.felv&&r.pont);
+  if(validRows.length<3){alert('Legalább 3 teljes historikus sor szükséges!');ok=false;}
+  const co=parseFloat(document.getElementById('curr_osszes').value);
+  const cf=parseFloat(document.getElementById('curr_ferohely').value);
+  if(!co||co<1){document.getElementById('curr_osszes').classList.add('err');document.getElementById('err_osszes').classList.add('show');ok=false;}
+  if(!cf||cf<1){document.getElementById('curr_ferohely').classList.add('err');document.getElementById('err_ferohely').classList.add('show');ok=false;}
+  const mn=parseFloat(document.getElementById('score_min').value);
+  const mx=parseFloat(document.getElementById('score_max').value);
+  if(isNaN(mn)||isNaN(mx)||mn>mx||mn<200||mx>500){document.getElementById('err_score').classList.add('show');ok=false;}
+  return ok;
+}
+
+// ── LAMBDA VISUAL ─────────────────────────────────────────────────────────
+function updateLambdaVisual(){
+  const lam=parseFloat(document.getElementById('lambda').value)||0.25;
+  // sync slider
+  const sliders=document.querySelectorAll('input[type=range]');
+  sliders.forEach(s=>s.value=lam);
+  const validRows=rows.filter(r=>r.year&&r.osszes&&r.felv&&r.pont);
+  const container=document.getElementById('lambdaVisual');
+  if(validRows.length<2){container.innerHTML='<p style="font-size:12px;color:var(--blue);">Add meg az adatokat a vizualizációhoz.</p>';return;}
+  const years=validRows.map(r=>parseFloat(r.year)).sort((a,b)=>a-b);
+  const maxY=Math.max(...years);
+  let w=years.map(y=>Math.exp(-lam*(maxY-y)));
+  const wSum=w.reduce((a,b)=>a+b,0);
+  w=w.map(wi=>wi/wSum*100);
+  const maxW=Math.max(...w);
+  let html='<div style="display:flex;align-items:flex-end;gap:6px;height:60px;">';
+  years.forEach((y,i)=>{
+    const h=Math.max(4,Math.round(w[i]/maxW*52));
+    const opacity=0.4+0.6*(w[i]/maxW);
+    html+=`<div style="text-align:center;flex:1;min-width:0;">
+      <div style="background:var(--blue);border-radius:3px 3px 0 0;height:${h}px;opacity:${opacity.toFixed(2)};"></div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--blue);margin-top:2px;white-space:nowrap;">${String(y).slice(2)}</div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--blue);opacity:.65;">${w[i].toFixed(0)}%</div>
+    </div>`;
+  });
+  html+='</div>';
+  container.innerHTML=html;
+}
+
+// ── LOCALSTORAGE ──────────────────────────────────────────────────────────
+function saveState(){
+  try{
+    localStorage.setItem('felveteli_state',JSON.stringify({
+      rows,nextId,
+      curr_osszes:document.getElementById('curr_osszes').value,
+      curr_ferohely:document.getElementById('curr_ferohely').value,
+      curr_sd:document.getElementById('curr_sd').value,
+      score_min:document.getElementById('score_min').value,
+      score_max:document.getElementById('score_max').value,
+      lambda:document.getElementById('lambda').value
+    }));
+  }catch(e){}
+}
+
+function loadState(){
+  try{
+    const s=JSON.parse(localStorage.getItem('felveteli_state'));
+    if(!s)return false;
+    rows=s.rows||[];nextId=s.nextId||1;
+    if(s.curr_osszes)document.getElementById('curr_osszes').value=s.curr_osszes;
+    if(s.curr_ferohely)document.getElementById('curr_ferohely').value=s.curr_ferohely;
+    if(s.curr_sd)document.getElementById('curr_sd').value=s.curr_sd;
+    if(s.score_min)document.getElementById('score_min').value=s.score_min;
+    if(s.score_max)document.getElementById('score_max').value=s.score_max;
+    if(s.lambda)document.getElementById('lambda').value=s.lambda;
+    renderTable();updateLambdaVisual();
+    return rows.length>0;
+  }catch(e){return false;}
+}
+
+function loadExample(){
+  rows=[];nextId=1;
+  [[2017,353,20,455],[2018,397,25,455],[2019,471,52,441],
+   [2020,667,69,437],[2021,558,138,414],[2022,841,139,434],
+   [2023,900,116,432],[2024,1010,157,415],[2025,1058,88,445]]
+  .forEach(([y,o,f,p])=>rows.push({id:nextId++,year:y,osszes:o,felv:f,pont:p}));
+  renderTable();updateLambdaVisual();saveState();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openModal(){document.getElementById('modalOverlay').classList.add('show');document.body.style.overflow='hidden';}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');document.body.style.overflow='';}
+function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+// ── MATH ──────────────────────────────────────────────────────────────────
+function erf(x){
+  const s=x<0?-1:1;x=Math.abs(x);
+  const t=1/(1+0.3275911*x);
+  return s*(1-(((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t)*Math.exp(-x*x));
+}
+function normCDF(x,mu,sigma){return 0.5*(1+erf((x-mu)/(sigma*Math.sqrt(2))));}
+function normPDF(x,mu,sigma){return Math.exp(-0.5*((x-mu)/sigma)**2)/(sigma*Math.sqrt(2*Math.PI));}
+function pctile(arr,p){
+  const s=[...arr].sort((a,b)=>a-b);
+  const idx=(p/100)*(s.length-1);
+  const lo=Math.floor(idx),hi=Math.ceil(idx);
+  return s[lo]+(idx-lo)*(s[hi]-s[lo]);
+}
+
+let distChart=null,fitChart=null;
+
+// ── LOADING ───────────────────────────────────────────────────────────────
+function setLoadingStep(n,pct){
+  [1,2,3,4].forEach(i=>{
+    const el=document.getElementById('ls'+i);
+    el.classList.remove('active','done');
+    if(i<n)el.classList.add('done');
+    if(i===n)el.classList.add('active');
+  });
+  document.getElementById('loaderBar').style.width=pct+'%';
+}
+
+// ── SIMULATION ────────────────────────────────────────────────────────────
+function runSimulation(){
+  if(!validateAll())return;
+
+  const validRows=rows.filter(r=>r.year&&r.osszes&&r.felv&&r.pont);
+  const years=validRows.map(r=>parseFloat(r.year));
+  const aranyok=validRows.map(r=>parseFloat(r.felv)/parseFloat(r.osszes));
+  const pontok=validRows.map(r=>parseFloat(r.pont));
+
+  const curr_osszes=parseFloat(document.getElementById('curr_osszes').value);
+  const ferohely_mu=parseFloat(document.getElementById('curr_ferohely').value);
+  const ferohely_sd=parseFloat(document.getElementById('curr_sd').value)||15;
+  const score_min=parseFloat(document.getElementById('score_min').value);
+  const score_max=parseFloat(document.getElementById('score_max').value);
+  const lam=parseFloat(document.getElementById('lambda').value)||0.25;
+
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('loadingOverlay').classList.add('show');
+  setLoadingStep(1,10);
+
+  setTimeout(()=>{
+    const n=aranyok.length;
+    const maxY=Math.max(...years);
+    let w=years.map(y=>Math.exp(-lam*(maxY-y)));
+    const wSum=w.reduce((a,b)=>a+b,0);
+    w=w.map(wi=>wi/wSum);
+
+    // WLS
+    let sw=0,swa=0,swp=0,swaa=0,swap=0;
+    for(let i=0;i<n;i++){sw+=w[i];swa+=w[i]*aranyok[i];swp+=w[i]*pontok[i];swaa+=w[i]*aranyok[i]*aranyok[i];swap+=w[i]*aranyok[i]*pontok[i];}
+    const det=sw*swaa-swa*swa;
+    const reg_a=(sw*swap-swa*swp)/det;
+    const reg_b=(swaa*swp-swa*swap)/det;
+    const pred_hist=aranyok.map(a=>reg_a*a+reg_b);
+    const residuals=pontok.map((p,i)=>p-pred_hist[i]);
+    const wrmse=Math.sqrt(residuals.reduce((s,r,i)=>s+w[i]*r*r,0));
+
+    setLoadingStep(2,30);
+
+    setTimeout(()=>{
+      // Bootstrap
+      const NBOOT=5000;
+      const ba=[],bb=[];
+      for(let b=0;b<NBOOT;b++){
+        const idx=Array.from({length:n},()=>Math.floor(Math.random()*n));
+        const ar_b=idx.map(i=>aranyok[i]),pt_b=idx.map(i=>pontok[i]);
+        let wb=idx.map(i=>w[i]);const wbs=wb.reduce((a,x)=>a+x,0);wb=wb.map(x=>x/wbs);
+        let sw2=0,swa2=0,swp2=0,swaa2=0,swap2=0;
+        for(let i=0;i<n;i++){sw2+=wb[i];swa2+=wb[i]*ar_b[i];swp2+=wb[i]*pt_b[i];swaa2+=wb[i]*ar_b[i]*ar_b[i];swap2+=wb[i]*ar_b[i]*pt_b[i];}
+        const det2=sw2*swaa2-swa2*swa2;
+        if(Math.abs(det2)<1e-12)continue;
+        ba.push((sw2*swap2-swa2*swp2)/det2);
+        bb.push((swaa2*swp2-swa2*swap2)/det2);
+      }
+
+      setLoadingStep(3,60);
+
+      setTimeout(()=>{
+        // Monte Carlo 500k
+        const N=500000;
+        const sim=new Float64Array(N);
+        for(let i=0;i<N;i++){
+          const u1=Math.random()||1e-10,u2=Math.random();
+          const z1=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+          const z2=Math.sqrt(-2*Math.log(u1))*Math.sin(2*Math.PI*u2);
+          const fero=Math.max(5,ferohely_mu+ferohely_sd*z1);
+          const akt=0.87+Math.random()*0.11;
+          const ar=fero/(curr_osszes*akt);
+          const bi=Math.floor(Math.random()*ba.length);
+          let p=ba[bi]*ar+bb[bi]+wrmse*z2;
+          if(p<350)p=350;if(p>500)p=500;
+          sim[i]=p;
+        }
+        const arr=Array.from(sim);
+        const mu_sim=arr.reduce((a,b)=>a+b,0)/N;
+        const std_sim=Math.sqrt(arr.reduce((s,x)=>s+(x-mu_sim)**2,0)/N);
+
+        setLoadingStep(4,90);
+
+        setTimeout(()=>{
+          renderResults(arr,mu_sim,std_sim,wrmse,reg_a,reg_b,w,years,pontok,pred_hist,score_min,score_max);
+          document.getElementById('loadingOverlay').classList.remove('show');
+          document.getElementById('runBtn').disabled=false;
+          document.getElementById('runBtn').textContent='Újra futtatás →';
+          document.getElementById('results').style.display='block';
+          document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+        },200);
+      },50);
+    },50);
+  },50);
+}
+
+function renderResults(arr,mu,std,wrmse,reg_a,reg_b,w,years,pontok,pred_hist,score_min,score_max){
+  // Felvételi esélyek
+  const pts=[];
+  if(score_min===score_max)pts.push(score_min);
+  else for(let p=score_min;p<=score_max;p++)pts.push(p);
+
+  document.getElementById('highlightTitle').textContent=`Felvételi esélyeid (${score_min}–${score_max} pont)`;
+  document.getElementById('highlightSub').textContent=`Várható ponthatár középértéke: ~${Math.round(mu)} pont (szórás: ±${std.toFixed(1)} pont)`;
+
+  const cb=document.getElementById('chanceBars');cb.innerHTML='';
+  pts.forEach(pt=>{
+    const pct=normCDF(pt,mu,std)*100;
+    const bw=Math.min(97,Math.max(4,Math.round(pct)));
+    const row=document.createElement('div');
+    row.className='chance-row';
+    row.innerHTML=`
+      <span class="chance-pt">${pt} pt</span>
+      <div class="chance-bar-bg">
+        <div class="chance-bar-fill" style="width:${bw}%;">
+          <span class="chance-pct-label">${pct.toFixed(1)}%</span>
+        </div>
+      </div>
+      <span class="chance-pct-right" style="color:#fff;font-weight:600;">${pct.toFixed(1)}%</span>
+    `;
+    cb.appendChild(row);
+  });
+
+  const minC=normCDF(score_min,mu,std)*100,maxC=normCDF(score_max,mu,std)*100;
+  document.getElementById('highlightNote').innerHTML=
+    `${score_min} pontnál az esély <strong style="color:#fff;">${minC.toFixed(1)}%</strong>, ${score_max} pontnál <strong style="color:#fff;">${maxC.toFixed(1)}%</strong>. Az érettségi nehézsége nem módosítja lényegesen ezt a számot, mert mindenkit egyformán érint — a relatív pozíciód megmarad.`;
+
+  // Metrikák
+  document.getElementById('metricsGrid').innerHTML=`
+    <div class="metric-card"><div class="metric-label">Középérték</div><div class="metric-value">${Math.round(mu)} pt</div></div>
+    <div class="metric-card"><div class="metric-label">Szórás (±1σ)</div><div class="metric-value">±${std.toFixed(1)} pt</div></div>
+    <div class="metric-card"><div class="metric-label">Illeszkedési hiba</div><div class="metric-value">±${wrmse.toFixed(1)} pt</div></div>
+    <div class="metric-card"><div class="metric-label">Forgatókönyvek</div><div class="metric-value">500 000</div></div>
+  `;
+
+  // Eloszlás diagram
+  const ctr=Math.round(mu);
+  const xs=[];for(let x=ctr-Math.ceil(4*std);x<=ctr+Math.ceil(4*std);x++)xs.push(x);
+  const pdfs=xs.map(x=>normPDF(x,mu,std));
+  const maxP=Math.max(...pdfs);
+  function getCol(x){
+    if(x>=score_min&&x<=score_max)return '#1A3D26';
+    const d=Math.abs(x-mu);
+    if(d<=2)return '#1A1714';if(d<=3.5)return '#3D3830';
+    if(d<=7)return '#5C574F';if(d<=13)return '#9C968E';return '#D4CFC4';
+  }
+  document.getElementById('distLegend').innerHTML=`
+    <div class="legend-item"><div class="legend-dot" style="background:#1A1714;"></div>nagyon valószínű (20%)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5C574F;"></div>valószínű (50%)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9C968E;"></div>nem valószínű (80%)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#D4CFC4;"></div>nagyon nem valószínű (95%)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1A3D26;"></div>a te sávod (${score_min}–${score_max})</div>
+  `;
+  if(distChart)distChart.destroy();
+  distChart=new Chart(document.getElementById('distChart'),{
+    type:'bar',
+    data:{labels:xs,datasets:[{data:pdfs.map(v=>v/maxP),backgroundColor:xs.map(getCol),borderWidth:0,borderRadius:1,barPercentage:1.0,categoryPercentage:1.0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>c[0].label+' pont',label:c=>{const x=xs[c.dataIndex];if(x>=score_min&&x<=score_max)return 'saját sáv — esély: '+(normCDF(x,mu,std)*100).toFixed(1)+'%';const d=Math.abs(x-mu);if(d<=2)return 'nagyon valószínű';if(d<=3.5)return 'eléggé valószínű';if(d<=7)return 'valószínű';if(d<=13)return 'nem valószínű';return 'nagyon nem valószínű';}}}} ,scales:{x:{ticks:{color:'#8C877E',font:{size:10},autoSkip:true,maxTicksLimit:14,maxRotation:0,callback:(v,i)=>xs[i]%5===0?xs[i]:''},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}},y:{display:false}}}
+  });
+
+  // Intervallumok
+  const ints2=[['nagyon nem valószínű, hogy ezen kívül',2.5,97.5,95],['nem valószínű, hogy ezen kívül',10,90,80],['valószínű, hogy ebben van',25,75,50],['eléggé valószínű, hogy ebben van',35,65,30],['nagyon valószínű, hogy ebben van',40,60,20]];
+  const ib=document.getElementById('intervalsBody');ib.innerHTML='';
+  ints2.forEach(([lbl,lo,hi,cov])=>{
+    const loV=Math.round(pctile(arr,lo)),hiV=Math.round(pctile(arr,hi));
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${lbl}</td><td><span class="conf-badge">${cov}%</span></td><td><span class="range-val">${loV}–${hiV}</span></td>`;
+    ib.appendChild(tr);
+  });
+
+  // Illeszkedés diagram
+  const sy=[...years].sort((a,b)=>a-b);
+  const ymap={};years.forEach((y,i)=>ymap[y]=i);
+  if(fitChart)fitChart.destroy();
+  fitChart=new Chart(document.getElementById('fitChart'),{
+    type:'line',
+    data:{labels:sy,datasets:[
+      {label:'valós',data:sy.map(y=>pontok[ymap[y]]),borderColor:'#1A3A5C',backgroundColor:'#1A3A5C',pointRadius:5,tension:0.2,borderWidth:2},
+      {label:'modell',data:sy.map(y=>pred_hist[ymap[y]]),borderColor:'#2D5F3F',backgroundColor:'#2D5F3F',pointRadius:4,tension:0.2,borderDash:[5,4],borderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' pt'}}},scales:{x:{ticks:{color:'#8C877E',font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}},y:{ticks:{color:'#8C877E',font:{size:11},callback:v=>v+' pt'},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}}}}
+  });
+
+  // Info grid
+  document.getElementById('infoGrid').innerHTML=`
+    <div class="info-card"><strong>Regressziós egyenlet</strong>Ponthatár = ${reg_a.toFixed(1)} × arány + ${reg_b.toFixed(1)}<br>Súlyozott illeszkedési hiba: ±${wrmse.toFixed(1)} pont</div>
+    <div class="info-card"><strong>Súlyozás</strong>λ = ${document.getElementById('lambda').value} · Legutóbbi év: ${(w[w.length-1]*100).toFixed(1)}% · Legrégebbi: ${(w[0]*100).toFixed(1)}%</div>
+  `;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+initDropdowns();
+const restored=loadState();
+if(!restored)loadExample();
+updateLambdaVisual();
+</script>
+</body>
+</html>
